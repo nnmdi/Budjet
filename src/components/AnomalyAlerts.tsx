@@ -141,7 +141,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
               median,
               stdDev,
               zScore,
-              message: `Your transaction '${t.description}' ($${t.amount}) is ${zScore.toFixed(1)} standard deviations higher than your 6-month average of $${mean.toFixed(0)} in '${t.budget}'.`,
+              message: `Your transaction '${t.description}' ($${t.amount}) is ${zScore.toFixed(1)}x higher than your typical average spend of $${mean.toFixed(0)} in '${t.budget}'.`,
               severity: zScore >= 2.5 ? "critical" : zScore >= 1.8 ? "warning" : "low",
             });
           }
@@ -178,11 +178,11 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
         </div>
         <div className="space-y-0.5">
           <p className="font-bold text-slate-800 flex items-center gap-1.5 leading-tight">
-            <span>Statistical Spending Baselining Active</span>
+            <span>Smart Spending Baseline Active</span>
             <span className="font-mono bg-emerald-100/75 text-emerald-700 px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider">HEALTHY</span>
           </p>
           <p className="text-[11px] text-slate-500 leading-normal font-sans">
-            No statistical outliers or budget spikes detected in your categories. Current standard deviations across all ledger parameters are within 1.5&sigma;.
+            No unexpected spending spikes or outliers detected in your categories. Your recent activity matches typical historical baselines.
           </p>
         </div>
       </div>
@@ -242,8 +242,8 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
             </div>
             <p className="text-[11.5px] text-slate-500 font-sans leading-normal">
               {criticalCount > 0 
-                ? `Alert: Detected ${criticalCount} transaction${criticalCount > 1 ? "s" : ""} deviating by more than 2.5 standard deviations from baseline average.`
-                : `Detected minor transaction deviations. Click to inspect threshold calculations.`
+                ? `Alert: Detected ${criticalCount} transaction${criticalCount > 1 ? "s" : ""} that are significantly higher than your typical budget average.`
+                : `Detected minor spending deviations. Click to inspect threshold calculations.`
               }
             </p>
           </div>
@@ -265,7 +265,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
             <div className="space-y-0.5 leading-relaxed font-sans">
               <p className="font-bold text-slate-800">How is this determined?</p>
               <p>
-                Our server analyzes the last <strong>six months of expenses</strong> per budget category. Standard deviations (&sigma;) assess dispersion behavior. For any expense, standard Z-scoring calculations mapping <strong>Z = (x - average) / &sigma;</strong> identify spikes where anomalous activities exceed 1.5&sigma; from the median baseline.
+                Our system analyzes historical transaction trends across each budget category. By comparing active transactions against typical spending ranges, we detect unusually high expenses or irregular spikes, highlighting patterns that may warrant closer inspection.
               </p>
             </div>
           </div>
@@ -301,15 +301,15 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
                       <div className="flex justify-between items-center text-[8.5px] font-mono text-slate-400">
                         <span>Baseline (Average: ${anomaly.mean.toFixed(0)})</span>
                         <span className={anomaly.severity === "critical" ? "text-rose-600 font-bold" : "text-amber-700 font-bold"}>
-                          +{anomaly.zScore.toFixed(2)}&sigma; Deviation
+                          +{anomaly.zScore.toFixed(1)}x Spending Deviation
                         </span>
                       </div>
                       
                       <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden relative">
                         {/* Background ticks */}
-                        <div className="absolute left-[30%] top-0 bottom-0 w-0.5 bg-slate-200" title="1.0 std dev"></div>
-                        <div className="absolute left-[50%] top-0 bottom-0 w-0.5 bg-slate-200" title="1.5 std dev"></div>
-                        <div className="absolute left-[75%] top-0 bottom-0 w-0.5 bg-slate-300" title="2.5 std dev"></div>
+                        <div className="absolute left-[30%] top-0 bottom-0 w-0.5 bg-slate-200" title="Minor variance"></div>
+                        <div className="absolute left-[50%] top-0 bottom-0 w-0.5 bg-slate-200" title="Moderate deviation"></div>
+                        <div className="absolute left-[75%] top-0 bottom-0 w-0.5 bg-slate-300" title="Significant spike"></div>
 
                         {/* Fill line */}
                         <div 

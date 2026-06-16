@@ -120,6 +120,11 @@ export default function App() {
   const [txOccurrencesCount, setTxOccurrencesCount] = useState<string>("12");
   const [txDescription, setTxDescription] = useState("");
 
+  // --- Controlled Settings ---
+  const [syncRetry, setSyncRetry] = useState(true);
+  const [tabularNumbers, setTabularNumbers] = useState(true);
+  const [liveCollab, setLiveCollab] = useState(true);
+
   const txClassification = useMemo(() => {
     return transactionClassifier.classify(txDescription);
   }, [txDescription]);
@@ -1154,8 +1159,8 @@ export default function App() {
           setCurrentTab("calculator");
           setActiveBudgetFilter(null);
         }}
-        userEmail={userEmail}
-        userName={userName}
+        userEmail={userEmail || "guest@example.com"}
+        userName={userName || "Guest User"}
         onLogout={handleLogout}
         onShowJoinModal={() => setShowJoinModal(true)}
         onDisconnectRoom={handleDisconnectRoom}
@@ -1270,6 +1275,7 @@ export default function App() {
                 setActiveBudgetFilter(name);
               }}
               onCreateBudget={() => setShowQuickCreate(true)}
+              onShowToast={triggerToast}
             />
           </div>
         ) : currentTab === "transactions" && !activeBudgetFilter ? (
@@ -1298,7 +1304,12 @@ export default function App() {
                   <p className="font-bold text-slate-700">Automatic Sync Retry</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Attempt network re-sync every 30 seconds when in background mode</p>
                 </div>
-                <input type="checkbox" defaultChecked className="rounded text-rose-605 focus:ring-rose-500 w-4 h-4" />
+                <input 
+                  type="checkbox" 
+                  checked={syncRetry} 
+                  onChange={(e) => setSyncRetry(e.target.checked)} 
+                  className="rounded text-rose-605 focus:ring-rose-500 w-4 h-4 cursor-pointer" 
+                />
               </div>
 
               <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded">
@@ -1306,7 +1317,12 @@ export default function App() {
                   <p className="font-bold text-slate-700">OpenType Tabular Numbers (tnum)</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Forces monospacing on numerical lists for perfect tabular alignment</p>
                 </div>
-                <input type="checkbox" defaultChecked className="rounded text-rose-605 focus:ring-rose-500 w-4 h-4" />
+                <input 
+                  type="checkbox" 
+                  checked={tabularNumbers} 
+                  onChange={(e) => setTabularNumbers(e.target.checked)} 
+                  className="rounded text-rose-605 focus:ring-rose-500 w-4 h-4 cursor-pointer" 
+                />
               </div>
 
               <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded">
@@ -1314,7 +1330,12 @@ export default function App() {
                   <p className="font-bold text-slate-700">Live Workspace Collaboration</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Enable Server-Sent Events push notifications on active folders</p>
                 </div>
-                <input type="checkbox" defaultChecked className="rounded text-rose-605 focus:ring-rose-500 w-4 h-4" />
+                <input 
+                  type="checkbox" 
+                  checked={liveCollab} 
+                  onChange={(e) => setLiveCollab(e.target.checked)} 
+                  className="rounded text-rose-605 focus:ring-rose-500 w-4 h-4 cursor-pointer" 
+                />
               </div>
             </div>
 
@@ -1785,6 +1806,7 @@ export default function App() {
                 setActiveBudgetFilter(name);
               }}
               onCreateBudget={() => setShowQuickCreate(true)}
+              onShowToast={triggerToast}
             />
 
             {/* Statistical Outliers & Anomaly Alerts Hub */}

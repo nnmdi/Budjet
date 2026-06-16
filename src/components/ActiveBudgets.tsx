@@ -7,9 +7,10 @@ interface ActiveBudgetsProps {
   transactions: Transaction[];
   onManageBudget: (name: string) => void;
   onCreateBudget?: () => void;
+  onShowToast?: (msg: string, type?: "success" | "info" | "warning") => void;
 }
 
-export default function ActiveBudgets({ budgets, transactions, onManageBudget, onCreateBudget }: ActiveBudgetsProps) {
+export default function ActiveBudgets({ budgets, transactions, onManageBudget, onCreateBudget, onShowToast }: ActiveBudgetsProps) {
   const budgetList = Object.values(budgets);
 
   return (
@@ -27,7 +28,13 @@ export default function ActiveBudgets({ budgets, transactions, onManageBudget, o
             </button>
           )}
           <button 
-            onClick={() => alert("Reviewing all structural portfolio asset buckets...")} 
+            onClick={() => {
+              if (onShowToast) {
+                onShowToast("Currently reviewing all active structural portfolio asset buckets.", "info");
+              } else {
+                alert("Reviewing all structural portfolio asset buckets...");
+              }
+            }} 
             className="text-xs font-bold text-rose-400 hover:text-rose-300 hover:underline cursor-pointer"
           >
             View All

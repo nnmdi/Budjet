@@ -36,8 +36,8 @@ export default function Sidebar({
   roomId,
   activeUsers,
   onTriggerNewScenario,
-  userEmail = "na33009755@gmail.com",
-  userName = "The Reliable Advisor",
+  userEmail = "guest@example.com",
+  userName = "Guest User",
   onShowJoinModal,
   onDisconnectRoom,
   onLogout

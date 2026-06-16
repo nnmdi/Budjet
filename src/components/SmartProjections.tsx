@@ -365,7 +365,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             Advanced 90-Day Treasury Forecast
           </h2>
           <p className="text-sm text-slate-300 font-medium leading-relaxed">
-            Using an Ordinary Least Squares (OLS) linear trend model fused with a Brownian random walk dispersion algorithm, BUDJET maps your historical spending velocity against daily variance. See where your capital path is leading.
+            A predictive model that uses historical spending patterns to simulate potential balance trends over the next 90 days, illustrating future cash flow conditions and potential financial risks.
           </p>
         </div>
       </div>
@@ -382,7 +382,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
           <h3 className="text-xl font-bold font-mono text-[#0b1c30]">
             {formatCurrency(totalLiquidity)}
           </h3>
-          <p className="text-[10.5px] text-slate-400 font-medium">Accumulated client active pools</p>
+          <p className="text-[10.5px] text-slate-400 font-medium">Combined balance across active accounts</p>
         </div>
 
         {/* Metric 2 */}
@@ -414,19 +414,19 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
           <h3 className={`text-xl font-bold font-mono ${metrics.monthlySlope >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
             {metrics.monthlySlope >= 0 ? "+" : ""}{formatCurrency(metrics.monthlySlope)}
           </h3>
-          <p className="text-[10.5px] text-slate-400 font-medium">Derived spending momentum rate</p>
+          <p className="text-[10.5px] text-slate-400 font-medium font-sans">Projected monthly growth or savings rate</p>
         </div>
 
         {/* Metric 4 */}
         <div className="p-5 bg-white border border-[#eff4ff] rounded-xl shadow-xs space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Spread Index</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Stability Rating</span>
             <ShieldCheck className="w-4 h-4 text-indigo-500" />
           </div>
           <h3 className="text-xl font-bold text-slate-800 font-mono">
-            {projectionStatus.volatilityState}
+            {projectionStatus.volatilityState === "Elevated Volatility" ? "Moderate Fluctuation" : "Highly Stable"}
           </h3>
-          <p className="text-[10.5px] text-slate-400 font-medium">Standard error: {formatCurrency(metrics.standardError)}</p>
+          <p className="text-[10.5px] text-slate-400 font-medium">Variance margin: {formatCurrency(metrics.standardError)}</p>
         </div>
 
       </div>
@@ -487,7 +487,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] text-slate-400 italic">Adjusts the error band margin bounds</p>
+              <p className="text-[9px] text-slate-400 italic">Adjusts the safety margin range of the simulation</p>
             </div>
 
             {/* Slider 3: Stress Testing Simulation */}
@@ -552,8 +552,8 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
           <div className="bg-slate-50 border border-slate-150 p-3.5 rounded-xl text-[10px] text-slate-500 font-sans leading-relaxed flex gap-2.5 items-start">
             <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="font-bold text-slate-700 leading-tight">Brownian Drift Math</p>
-              <p>Predictive interval margins expand non-linearly over time based on volatility &times; &radic;t, reflecting forecast decay. Hover any coordinate to view exact details.</p>
+              <p className="font-bold text-slate-700 leading-tight">Predictive Confidence Model</p>
+              <p>The shaded confidence band illustrates the range of potential outcomes based on past volatility. As the forecast extends further into the future, the projected range naturally widens to reflect spending uncertainty.</p>
             </div>
           </div>
         </div>
