@@ -187,6 +187,7 @@ app.post("/api/rooms/:id/sync", (req, res) => {
             name: budget.name,
             balance: Number(budget.balance),
             created: budget.created,
+            targetBalance: budget.targetBalance ? Number(budget.targetBalance) : undefined,
           };
           actionLabel = `Created budget '${budget.name}' with starter balance of $${Number(budget.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
           changed = true;
@@ -267,6 +268,16 @@ app.post("/api/rooms/:id/sync", (req, res) => {
           if (budgetRef) {
             budgetRef.balance = Number(newBalance);
             actionLabel = `Reset balance of '${budgetName}' from $${Number(oldBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })} to $${Number(newBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+            changed = true;
+          }
+          break;
+        }
+        case "update_budget_goal": {
+          const { budgetName, targetBalance } = action.payload;
+          const budgetRef = room.budgets[budgetName];
+          if (budgetRef) {
+            budgetRef.targetBalance = targetBalance !== undefined ? Number(targetBalance) : undefined;
+            actionLabel = `Updated budget goal for '${budgetName}' to ${targetBalance !== undefined ? `$${Number(targetBalance).toLocaleString('en-US')}` : 'none'}`;
             changed = true;
           }
           break;

@@ -58,11 +58,14 @@ export default function Sidebar({
     >
       <div>
         {/* Brand Header */}
-        <div id="brand-header" className="mb-8 flex items-center gap-3 px-2">
-          <div className="w-8 h-8 bg-rose-700 rounded-lg flex items-center justify-center font-bold text-lg text-white shadow-md shadow-rose-700/35">✈️</div>
+        <div id="brand-header" className="mb-8 flex items-center gap-3 px-1">
+          <div className="w-9 h-9 bg-rose-700 rounded-lg flex items-center justify-center font-bold text-[#050a18] shadow-md shadow-rose-700/35 shrink-0">🍽️💵</div>
           <div>
-            <h1 id="brand-title" className="text-lg font-bold tracking-tight text-white leading-tight">BUDJET</h1>
-            <p id="brand-subtitle" className="text-[9px] font-semibold tracking-widest text-rose-400 uppercase">Your smart money helper</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h1 id="brand-title" className="text-[14px] font-black tracking-tight text-white leading-none">Cash Diet</h1>
+              <span className="text-[8px] font-extrabold px-1 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-widest leading-none">BETA</span>
+            </div>
+            <p id="brand-subtitle" className="text-[9px] font-bold tracking-wider text-rose-400 uppercase mt-1">Your Wallet's Diet</p>
           </div>
         </div>
 

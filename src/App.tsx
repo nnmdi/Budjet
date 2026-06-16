@@ -20,7 +20,9 @@ import {
   ArrowUpRight,
   Sparkles,
   Tag,
-  Info
+  Info,
+  Sun,
+  Moon
 } from "lucide-react";
 import { transactionClassifier } from "./utils/transactionClassifier";
 import { 
@@ -64,6 +66,11 @@ export default function App() {
   });
   const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
     return sessionStorage.getItem("budgetmanager_is_guest") === "true";
+  });
+
+  // --- Dark Mode State ---
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem("theme") !== "light";
   });
 
   // --- Primary App States ---
@@ -119,6 +126,8 @@ export default function App() {
   const [txCustomWeeks, setTxCustomWeeks] = useState<string>("3");
   const [txOccurrencesCount, setTxOccurrencesCount] = useState<string>("12");
   const [txDescription, setTxDescription] = useState("");
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [goalInputValue, setGoalInputValue] = useState("");
 
   // --- Controlled Settings ---
   const [syncRetry, setSyncRetry] = useState(true);
@@ -564,6 +573,20 @@ export default function App() {
           triggerToast(`Restored balance of '${budgetName}' to ${formatCurrency(oldBalance)}`, "info");
           break;
         }
+        case "update_budget_goal": {
+          const { budgetName, oldGoal } = currentStep.data;
+          setBudgets((prev) => {
+            const b = prev[budgetName];
+            if (!b) return prev;
+            return {
+              ...prev,
+              [budgetName]: { ...b, targetBalance: oldGoal }
+            };
+          });
+          registerSyncAction("update_budget_goal", { budgetName, targetBalance: oldGoal });
+          triggerToast(`Reverted goal for '${budgetName}'`, "info");
+          break;
+        }
       }
     } catch (e) {
       console.error(e);
@@ -630,6 +653,20 @@ export default function App() {
           });
           registerSyncAction("reset_balance", { budgetName, oldBalance: currentStep.data.oldBalance, newBalance });
           triggerToast(`Redid balance reset of '${budgetName}' to ${formatCurrency(newBalance)}`, "info");
+          break;
+        }
+        case "update_budget_goal": {
+          const { budgetName, newGoal } = currentStep.data;
+          setBudgets((prev) => {
+            const b = prev[budgetName];
+            if (!b) return prev;
+            return {
+              ...prev,
+              [budgetName]: { ...b, targetBalance: newGoal }
+            };
+          });
+          registerSyncAction("update_budget_goal", { budgetName, targetBalance: newGoal });
+          triggerToast(`Redid goal update for '${budgetName}'`, "info");
           break;
         }
       }
@@ -962,6 +999,26 @@ export default function App() {
     triggerToast(`Balance adjusted for '${budgetName}'`, "success");
   };
 
+  const handleSetBudgetGoal = (budgetName: string, goal: number | undefined) => {
+    const currentBudget = budgets[budgetName];
+    if (!currentBudget) return;
+
+    setBudgets((prev) => ({
+      ...prev,
+      [budgetName]: { ...currentBudget, targetBalance: goal }
+    }));
+
+    registerSyncAction("update_budget_goal", { budgetName, targetBalance: goal });
+
+    pushUndoStep({
+      type: "update_budget_goal",
+      data: { budgetName, oldGoal: currentBudget.targetBalance, newGoal: goal },
+      timestamp: Date.now()
+    });
+
+    triggerToast(goal !== undefined ? `Savings Goal of ${formatCurrency(goal)} set for '${budgetName}'!` : `Removed Savings Goal for '${budgetName}'`, "success");
+  };
+
   const handleDeleteBudgetDirect = (budgetName: string) => {
     const target = budgets[budgetName];
     if (!target) return;
@@ -1163,7 +1220,7 @@ export default function App() {
 
   // Render proper sub views
   return (
-    <div id="application-container" className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] pl-64 font-sans antialiased">
+    <div id="application-container" className={`min-h-screen ${isDarkMode ? "dark-theme" : "light-theme"} bg-slate-950 text-slate-705 pl-64 font-sans antialiased`}>
       
       {/* Sidebar navigation */}
       <Sidebar
@@ -1218,18 +1275,18 @@ export default function App() {
         )}
         
         {/* Dynamic Nav Header Bar */}
-        <header id="tab-nav-header" className="flex items-center justify-between mb-8 border-b border-[#eff4ff] pb-5">
+        <header id="tab-nav-header" className="flex items-center justify-between mb-8 border-b border-slate-800/80 pb-5">
           <div className="flex items-center gap-4">
             {activeBudgetFilter ? (
               <button
                 onClick={() => setActiveBudgetFilter(null)}
-                className="p-1.5 hover:bg-slate-100 rounded border border-slate-200 text-slate-500 hover:text-slate-900 transition-all"
-                title="Return of dashboard"
+                className="p-1.5 hover:bg-slate-800 rounded border border-slate-850 text-slate-400 hover:text-white transition-all cursor-pointer"
+                title="Return to dashboard"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
             ) : null}
-            <h2 id="view-title" className="text-2xl font-bold tracking-tight text-[#0b1c30] capitalize">
+            <h2 id="view-title" className="text-2xl font-black tracking-tight text-white capitalize">
               {activeBudgetFilter ? `Budget / ${activeBudgetFilter}` : currentTab}
             </h2>
           </div>
@@ -1238,28 +1295,42 @@ export default function App() {
           <div id="header-actions" className="flex items-center gap-4">
             
             {/* Search Box */}
-            <div className="hidden sm:block text-slate-400 text-xs bg-white border border-[#e5eeff] px-4 py-1.5 rounded-lg w-52 text-[#0b1c30] flex items-center justify-between font-medium">
+            <div className="hidden sm:block text-slate-400 text-xs bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-lg w-52 flex items-center justify-between font-medium">
               <span className="truncate max-w-[150px]">{userEmail || "Guest Session"}</span>
-              <Wifi className={`w-3.5 h-3.5 shrink-0 ${online ? "text-emerald-500" : "text-amber-500 animate-pulse"}`} />
+              <Wifi className={`w-3.5 h-3.5 shrink-0 ${online ? "text-rose-455" : "text-amber-500 animate-pulse"}`} />
             </div>
 
             {/* Undo / Redo triggers */}
-            <div className="flex items-center border border-[#e5eeff] bg-white rounded-lg p-1 gap-1">
+            <div className="flex items-center border border-slate-800 bg-slate-900 rounded-lg p-1 gap-1">
               <button
                 onClick={executeUndo}
-                className={`p-1.5 rounded hover:bg-slate-50 transition-colors ${undoStack.length === 0 ? "opacity-30 cursor-not-allowed text-slate-400" : "text-[#0058be]"}`}
+                className={`p-1.5 rounded hover:bg-slate-850 transition-colors cursor-pointer ${undoStack.length === 0 ? "opacity-30 cursor-not-allowed text-slate-500" : "text-rose-400"}`}
                 title="Undo last action"
               >
                 <RotateCcw className="w-4.5 h-4.5" />
               </button>
               <button
                 onClick={executeRedo}
-                className={`p-1.5 rounded hover:bg-slate-50 transition-colors ${redoStack.length === 0 ? "opacity-30 cursor-not-allowed text-slate-400" : "text-[#0058be]"}`}
+                className={`p-1.5 rounded hover:bg-slate-850 transition-colors cursor-pointer ${redoStack.length === 0 ? "opacity-30 cursor-not-allowed text-slate-500" : "text-rose-400"}`}
                 title="Redo action"
               >
                 <RotateCw className="w-4.5 h-4.5" />
               </button>
             </div>
+
+            {/* Light / Dark Theme Toggle Switch */}
+            <button
+              onClick={() => {
+                const newMode = !isDarkMode;
+                setIsDarkMode(newMode);
+                localStorage.setItem("theme", newMode ? "dark" : "light");
+                triggerToast(`Theme switched to ${newMode ? "Dark Mode" : "Light Mode"}`, "info");
+              }}
+              className="p-1.5 rounded border border-slate-800 bg-slate-900 text-rose-450 hover:bg-slate-850 hover:text-rose-300 transition-all cursor-pointer flex items-center justify-center h-8.5 w-8.5 shadow-sm"
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
 
             {/* General quick actions click list */}
             {!activeBudgetFilter && (
@@ -1312,9 +1383,9 @@ export default function App() {
           <SmartProjections budgets={budgets} transactions={transactions} dueBills={dueBills} />
         ) : currentTab === "settings" ? (
           // Tab 4: Settings config panel
-          <div className="bg-white border border-[#eff4ff] rounded-lg p-6 max-w-2xl mx-auto shadow-sm space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-2xl mx-auto shadow-sm space-y-6">
             <div>
-              <h3 className="text-lg font-bold text-[#0b1c30]">Settings & Preferences</h3>
+              <h3 className="text-lg font-black text-white">Settings & Preferences</h3>
               <p className="text-xs text-slate-400 font-sans mt-0.5">Automate and customize active synchronization and assets</p>
             </div>
 
@@ -1401,6 +1472,118 @@ export default function App() {
                     Delete Budget
                   </button>
                 </div>
+
+                {/* 'Budget Goal' progress tracker */}
+                <div className="border-t border-slate-800/80 pt-4 mt-4 space-y-3 max-w-lg">
+                  {isEditingGoal ? (
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const val = parseFloat(goalInputValue);
+                        if (isNaN(val) || val <= 0) {
+                          handleSetBudgetGoal(activeBudgetFilter, undefined);
+                        } else {
+                          handleSetBudgetGoal(activeBudgetFilter, val);
+                        }
+                        setIsEditingGoal(false);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">$</span>
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="any"
+                          placeholder="e.g. 5000"
+                          value={goalInputValue}
+                          onChange={(e) => setGoalInputValue(e.target.value)}
+                          className="w-32 pl-6 pr-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white font-mono outline-none focus:border-rose-500"
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white text-[11px] font-bold rounded cursor-pointer transition-all"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingGoal(false)}
+                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-350 text-[11px] font-medium rounded cursor-pointer transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest font-sans">Budget Goal:</span>
+                        <span className="text-sm font-bold font-mono text-white">
+                          {budgets[activeBudgetFilter]?.targetBalance !== undefined && budgets[activeBudgetFilter]!.targetBalance! > 0 
+                            ? formatCurrency(budgets[activeBudgetFilter]!.targetBalance!) 
+                            : "No Goal Set"}
+                        </span>
+                        {budgets[activeBudgetFilter]?.targetBalance !== undefined && budgets[activeBudgetFilter]!.targetBalance! > 0 && (
+                          <span className="text-[11px] font-bold text-rose-450 font-sans ml-1">
+                            ({Math.round(Math.min(100, Math.max(0, ((budgets[activeBudgetFilter]?.balance || 0) / budgets[activeBudgetFilter]!.targetBalance!) * 100)))}% reached)
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => {
+                            const currentTarget = budgets[activeBudgetFilter]?.targetBalance;
+                            setGoalInputValue(currentTarget ? currentTarget.toString() : "");
+                            setIsEditingGoal(true);
+                          }}
+                          className="text-[11px] font-bold text-rose-400 hover:text-rose-300 font-sans cursor-pointer hover:underline"
+                        >
+                          {budgets[activeBudgetFilter]?.targetBalance !== undefined && budgets[activeBudgetFilter]!.targetBalance! > 0 ? "Edit Goal" : "Set Goal"}
+                        </button>
+                        {budgets[activeBudgetFilter]?.targetBalance !== undefined && budgets[activeBudgetFilter]!.targetBalance! > 0 && (
+                          <button
+                            onClick={() => {
+                              if (confirm("Remove your budget goal target balance?")) {
+                                handleSetBudgetGoal(activeBudgetFilter, undefined);
+                              }
+                            }}
+                            className="text-[11px] text-slate-500 hover:text-rose-450 font-sans cursor-pointer hover:underline"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {budgets[activeBudgetFilter]?.targetBalance !== undefined && budgets[activeBudgetFilter]!.targetBalance! > 0 && (
+                    <div className="space-y-1.5 pt-0.5">
+                      <div className="relative w-full h-2.5 bg-slate-900 border border-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-rose-700 to-rose-400 rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${Math.round(Math.min(100, Math.max(0, ((budgets[activeBudgetFilter]?.balance || 0) / budgets[activeBudgetFilter]!.targetBalance!) * 100)))}%` 
+                          }}
+                        />
+                      </div>
+                      
+                      <p className="text-[11px] text-slate-300 font-sans tracking-wide">
+                        {Math.round(Math.min(100, Math.max(0, ((budgets[activeBudgetFilter]?.balance || 0) / budgets[activeBudgetFilter]!.targetBalance!) * 100))) >= 100 ? (
+                          <span className="text-emerald-400 font-bold flex items-center gap-1">
+                            ✨ Goal achieved! Fantastic savings and tracking!
+                          </span>
+                        ) : (
+                          <span>
+                            Saved <strong>{formatCurrency(budgets[activeBudgetFilter]?.balance || 0)}</strong> of <strong>{formatCurrency(budgets[activeBudgetFilter]!.targetBalance!)}</strong> target. Only <strong>{formatCurrency(Math.max(0, budgets[activeBudgetFilter]!.targetBalance! - (budgets[activeBudgetFilter]?.balance || 0)))}</strong> left!
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Due Today panel inside Detailed view */}
@@ -1424,13 +1607,13 @@ export default function App() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               
               {/* Add Transaction form card */}
-              <div className="bg-white border border-[#eff4ff] rounded-lg p-6 shadow-sm h-fit">
-                <h3 className="text-base font-bold text-[#0b1c30] tracking-tight mb-4">New Transaction</h3>
+              <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-sm h-fit">
+                <h3 className="text-base font-black text-white tracking-tight mb-4">New Transaction</h3>
                 
                 <form onSubmit={handleAddNewTransaction} className="space-y-4 text-xs">
                   {/* Amount Value */}
                   <div className="space-y-1">
-                    <label className="font-bold text-slate-500 uppercase tracking-widest text-[9px] block">Amount ($)</label>
+                    <label className="font-bold text-slate-400 uppercase tracking-widest text-[9px] block">Amount ($)</label>
                     <input 
                       type="number"
                       required
@@ -1439,18 +1622,18 @@ export default function App() {
                       placeholder="0.00"
                       value={txAmount}
                       onChange={(e) => setTxAmount(e.target.value)}
-                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded text-sm text-slate-900 font-mono focus:border-[#2170e4] font-medium outline-none"
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-850 rounded text-sm text-white font-mono focus:border-rose-400 font-medium outline-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     {/* Choose Transaction Type */}
                     <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-widest text-[9px] block">Type</label>
+                      <label className="font-bold text-slate-400 uppercase tracking-widest text-[9px] block">Type</label>
                       <select 
                         value={txType}
                         onChange={(e) => setTxType(e.target.value as "profit" | "expense")}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded font-medium text-slate-700 focus:border-[#2170e4] outline-none"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-850 rounded font-medium text-white focus:border-rose-400 outline-none [&>option]:bg-slate-950 [&>option]:text-white"
                       >
                         <option value="expense">Expense</option>
                         <option value="profit">Profit</option>
@@ -1459,11 +1642,11 @@ export default function App() {
 
                     {/* Choose Recurrence */}
                     <div className="space-y-1">
-                      <label className="font-bold text-slate-500 uppercase tracking-widest text-[9px] block">Recurrence</label>
+                      <label className="font-bold text-slate-400 uppercase tracking-widest text-[9px] block">Recurrence</label>
                       <select 
                         value={txRecurrence}
                         onChange={(e) => setTxRecurrence(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded font-medium text-slate-700 focus:border-[#2170e4] outline-none"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-850 rounded font-medium text-white focus:border-rose-400 outline-none [&>option]:bg-slate-950 [&>option]:text-white"
                       >
                         <option value="one-time">One-time</option>
                         <option value="weekly">Weekly</option>
@@ -1477,10 +1660,10 @@ export default function App() {
 
                   {/* Progressive Recurrence Parameters Dashboard */}
                   {txRecurrence !== "one-time" && (
-                    <div className="grid grid-cols-2 gap-3 bg-slate-50 border border-slate-150 p-2.5 rounded-lg animate-fadeIn text-[10px]">
+                    <div className="grid grid-cols-2 gap-3 bg-[#0a0f20] border border-slate-850 p-2.5 rounded-lg animate-fadeIn text-[10px]">
                       {txRecurrence === "custom-weeks" ? (
                         <div className="space-y-1">
-                          <label className="font-bold text-slate-500 uppercase tracking-widest text-[8px] block">Weeks (X)</label>
+                          <label className="font-bold text-slate-400 uppercase tracking-widest text-[8px] block">Weeks (X)</label>
                           <input 
                             type="number"
                             min={1}
@@ -1488,21 +1671,21 @@ export default function App() {
                             required
                             value={txCustomWeeks}
                             onChange={(e) => setTxCustomWeeks(e.target.value)}
-                            className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded font-mono text-[#0b1c30] text-xs outline-none focus:border-[#2170e4]"
+                            className="w-full px-2 py-1.5 bg-slate-950 border border-slate-850 rounded font-mono text-white text-xs outline-none focus:border-rose-400"
                             placeholder="e.g. 3"
                           />
                         </div>
                       ) : (
                         <div className="space-y-1">
                           <label className="font-bold text-slate-400 uppercase tracking-widest text-[8px] block">Frequency Rules</label>
-                          <div className="px-2 py-1.5 bg-slate-100 text-slate-600 rounded font-bold font-mono text-[9px] uppercase tracking-wider text-center">
+                          <div className="px-2 py-1.5 bg-slate-900 border border-slate-800 text-slate-300 rounded font-bold font-mono text-[9px] uppercase tracking-wider text-center">
                             {txRecurrence === "weekly" ? "Every 1 Week" : txRecurrence === "bi-weekly" ? "Every 2 Weeks" : txRecurrence === "monthly" ? "Every Month" : "Every Year"}
                           </div>
                         </div>
                       )}
                       
                       <div className="space-y-1">
-                        <label className="font-bold text-slate-500 uppercase tracking-widest text-[8px] block">Occurrences</label>
+                        <label className="font-bold text-slate-400 uppercase tracking-widest text-[8px] block">Occurrences</label>
                         <input 
                           type="number"
                           min={1}
@@ -1510,7 +1693,7 @@ export default function App() {
                           required
                           value={txOccurrencesCount}
                           onChange={(e) => setTxOccurrencesCount(e.target.value)}
-                          className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded font-mono text-[#0b1c30] text-xs outline-none focus:border-[#2170e4]"
+                          className="w-full px-2 py-1.5 bg-slate-950 border border-slate-850 rounded font-mono text-white text-xs outline-none focus:border-rose-400"
                           placeholder="e.g. 12"
                         />
                       </div>
@@ -1519,7 +1702,7 @@ export default function App() {
 
                   {/* Description Box */}
                   <div className="space-y-1">
-                    <label className="font-bold text-slate-500 uppercase tracking-widest text-[9px] block">Description</label>
+                    <label className="font-bold text-slate-400 uppercase tracking-widest text-[9px] block">Description</label>
                     <input 
                       type="text"
                       required
@@ -1527,7 +1710,7 @@ export default function App() {
                       placeholder="e.g. Weekly Groceries, Apple Store..."
                       value={txDescription}
                       onChange={(e) => setTxDescription(e.target.value)}
-                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded font-mono text-slate-900 focus:border-[#2170e4] outline-none"
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-850 rounded font-mono text-white focus:border-rose-400 outline-none"
                     />
                   </div>
 
@@ -1634,15 +1817,15 @@ export default function App() {
             <div id="dashboard-statistics" className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* Total Liquidity */}
-              <div className="bg-white border border-[#eff4ff] rounded-lg p-6 shadow-sm border-l-4 border-l-[#2170e4] flex flex-col justify-between h-40">
+              <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-sm border-l-4 border-l-rose-500 flex flex-col justify-between h-40">
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sans">Total Liquidity</span>
-                    <h3 className="text-3xl font-black font-mono tracking-tight text-slate-900 mt-2">
+                    <h3 className="text-3xl font-black font-mono tracking-tight text-slate-705 mt-2">
                       {formatCurrency(totalLiquidity)}
                     </h3>
                   </div>
-                  <div className="p-3 bg-[#eff4ff] text-[#2170e4] rounded border border-[#dce9ff]">
+                  <div className="p-3 bg-rose-500/10 text-rose-450 rounded border border-rose-500/20">
                     <Wallet className="w-5.5 h-5.5" />
                   </div>
                 </div>
@@ -1650,8 +1833,8 @@ export default function App() {
                   !liquidityComparison.hasHistory 
                     ? "text-slate-500" 
                     : liquidityComparison.isIncrease 
-                      ? "text-emerald-600" 
-                      : "text-rose-600"
+                      ? "text-emerald-500" 
+                      : "text-rose-500"
                 }`}>
                   {liquidityComparison.hasHistory ? (
                     liquidityComparison.isIncrease ? (
@@ -1667,21 +1850,21 @@ export default function App() {
               </div>
 
               {/* Monthly Spend tracker */}
-              <div className="bg-white border border-[#eff4ff] rounded-lg p-6 shadow-sm border-l-4 border-l-[#ff6b6b] flex flex-col justify-between h-40">
+              <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-sm border-l-4 border-l-[#ff6b6b] flex flex-col justify-between h-40">
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sans">Monthly Spend</span>
-                    <h3 className="text-3xl font-black font-mono tracking-tight text-slate-900 mt-2">
+                    <h3 className="text-3xl font-black font-mono tracking-tight text-slate-705 mt-2">
                       {formatCurrency(monthlySpendTotal)}
                     </h3>
                   </div>
-                  <div className="p-3 bg-red-50 text-[#ff6b6b] rounded border border-red-100">
+                  <div className="p-3 bg-red-500/10 text-[#ff6b6b] rounded border border-red-500/20">
                     <TrendingDown className="w-5.5 h-5.5" />
                   </div>
                 </div>
                 {/* Red status progress bar mirroring mockup */}
                 <div className="mt-2 text-xs">
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 relative overflow-hidden">
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 relative overflow-hidden">
                     <div 
                       className="h-full bg-rose-500 rounded-full transition-all duration-300"
                       style={{ width: `${Math.min((monthlySpendTotal / 10000) * 100, 100)}%` }}
@@ -1692,12 +1875,12 @@ export default function App() {
               </div>
 
               {/* Quick Actions Panel from Screenshot 1 */}
-              <div className="bg-white border border-[#eff4ff] rounded-lg p-5 shadow-sm space-y-2.5 h-40 flex flex-col justify-center">
+              <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-sm space-y-2.5 h-40 flex flex-col justify-center">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Quick Actions</span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setShowQuickCreate(true)}
-                    className="py-2.5 px-3 bg-[#e5eeff] hover:bg-[#dce9ff] text-[#0058be] font-bold text-[10.5px] uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    className="py-2.5 px-3 bg-slate-805 hover:bg-slate-800 text-rose-455 hover:text-white border border-slate-700/40 font-bold text-[10.5px] uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     Create Budget
                   </button>
@@ -1711,14 +1894,14 @@ export default function App() {
                       setOldRenameSelect(list[0]);
                       setShowQuickRename(true);
                     }}
-                    className="py-2.5 px-3 bg-[#e5eeff] hover:bg-[#dce9ff] text-[#0058be] font-bold text-[10.5px] uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    className="py-2.5 px-3 bg-slate-805 hover:bg-slate-800 text-rose-455 hover:text-white border border-slate-700/40 font-bold text-[10.5px] uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     Rename Budget
                   </button>
                 </div>
                 <button
                   onClick={handleArchiveOldFunds}
-                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-1"
+                  className="w-full py-2 bg-slate-855 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800/80 font-bold text-[10px] uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-1"
                 >
                   Archive Old Funds
                 </button>

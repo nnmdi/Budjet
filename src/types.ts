@@ -2,6 +2,7 @@ export interface Budget {
   name: string;
   balance: number;
   created: string;
+  targetBalance?: number;
 }
 
 export interface Transaction {
@@ -25,7 +26,7 @@ export interface ActivityLog {
 
 export interface SyncAction {
   id: string;
-  type: 'create_budget' | 'delete_budget' | 'add_transaction' | 'delete_transactions' | 'rename_budget' | 'reset_balance';
+  type: 'create_budget' | 'delete_budget' | 'add_transaction' | 'delete_transactions' | 'rename_budget' | 'reset_balance' | 'update_budget_goal';
   payload: any;
   timestamp: number;
   clientId: string;
@@ -62,7 +63,7 @@ export interface HypotheticalEntry {
 }
 
 export interface UndoStep {
-  type: 'create_budget' | 'delete_budget' | 'add_transaction' | 'add_recurring' | 'erase_transactions' | 'rename_budget' | 'reset_balance';
+  type: 'create_budget' | 'delete_budget' | 'add_transaction' | 'add_recurring' | 'erase_transactions' | 'rename_budget' | 'reset_balance' | 'update_budget_goal';
   data: any;
   timestamp: number;
 }

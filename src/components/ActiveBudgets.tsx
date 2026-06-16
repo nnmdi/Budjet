@@ -125,6 +125,21 @@ export default function ActiveBudgets({ budgets, transactions, onManageBudget, o
                 </svg>
               </div>
 
+              {bg.targetBalance !== undefined && bg.targetBalance > 0 && (
+                <div className="mb-4 space-y-1 font-sans">
+                  <div className="flex items-center justify-between text-[10px] text-slate-450 font-bold tracking-wide">
+                    <span>Goal: {formatCurrency(bg.targetBalance)}</span>
+                    <span className="text-rose-400">{Math.round(Math.min(100, Math.max(0, (allocatedSum / bg.targetBalance) * 100)))}%</span>
+                  </div>
+                  <div className="relative w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-850">
+                    <div 
+                      className="h-full bg-gradient-to-r from-rose-700 to-rose-450 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.round(Math.min(100, Math.max(0, (allocatedSum / bg.targetBalance) * 100)))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between border-t border-slate-800 pt-3 mt-1 font-sans">
                 <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-bold ${statusColor}`}>
                   {statusText}

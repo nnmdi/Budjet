@@ -115,14 +115,17 @@ export default function AuthOverlay({ onLogin, onGuest }: AuthOverlayProps) {
         {/* Simple elegant logo design */}
         <div className="flex flex-col items-center text-center space-y-3.5">
           <div className="w-12 h-12 bg-rose-700 rounded-2xl flex items-center justify-center font-bold text-2xl text-white shadow-xl shadow-rose-700/30">
-            ✈️
+            🍽️💵
           </div>
           <div>
-            <h2 className="text-xl font-extrabold text-white tracking-tight leading-none uppercase">
-              BUDJET
-            </h2>
-            <p className="text-[10px] text-rose-400 font-bold uppercase tracking-widest mt-1.5 leading-none">
-              The Reliable Personal Advisor
+            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              <h2 className="text-xl font-extrabold text-white tracking-tight leading-none uppercase">
+                Cash Diet
+              </h2>
+              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-widest leading-none">BETA</span>
+            </div>
+            <p className="text-[10px] text-rose-400 font-bold uppercase tracking-widest mt-1.5 leading-none font-sans">
+              Your Wallet's Diet
             </p>
           </div>
           <p className="text-xs text-slate-400 max-w-xs leading-relaxed">

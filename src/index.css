@@ -4,13 +4,91 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Overriding rose shades into light jade green with teal green undertones */
+  --color-rose-50: #f0fdf9;
+  --color-rose-100: #ccfbf1;
+  --color-rose-200: #99f6e4;
+  --color-rose-300: #5eead4;
+  --color-rose-450: #10b981; /* jade green */
+  --color-rose-455: #0ad3a2;
+  --color-rose-400: #34d399; /* light jade green */
+  --color-rose-500: #14b8a6; /* teal green undertone */
+  --color-rose-600: #0d9488;
+  --color-rose-605: #059669;
+  --color-rose-700: #047857; /* teal/jade */
+  --color-rose-800: #115e59;
+  --color-rose-900: #064e3b;
+  --color-rose-950: #022c22;
+
+  /* Dynamically bind Slate shades via CSS custom properties */
+  --color-slate-50: var(--slate-50);
+  --color-slate-100: var(--slate-100);
+  --color-slate-150: var(--slate-150);
+  --color-slate-200: var(--slate-200);
+  --color-slate-300: var(--slate-300);
+  --color-slate-400: var(--slate-400);
+  --color-slate-450: var(--slate-450);
+  --color-slate-500: var(--slate-500);
+  --color-slate-600: var(--slate-600);
+  --color-slate-705: var(--slate-705);
+  --color-slate-700: var(--slate-700);
+  --color-slate-800: var(--slate-800);
+  --color-slate-850: var(--slate-850);
+  --color-slate-900: var(--slate-900);
+  --color-slate-950: var(--slate-950);
+
+  /* Theme-dependent white mapping */
+  --color-white: var(--white-theme);
+}
+
+:root {
+  /* Default/Dark Theme settings */
+  --slate-50: #0a0d1e;
+  --slate-100: #111833;
+  --slate-150: #182348;
+  --slate-200: #1e2c56;
+  --slate-300: #2a3c6d;
+  --slate-400: #627ba6;
+  --slate-450: #889ec4;
+  --slate-500: #94a3b8;
+  --slate-600: #cbd5e1;
+  --slate-705: #f1f5f9;
+  --slate-700: #e2e8f0;
+  --slate-800: #1c274a;
+  --slate-850: #121b3a;
+  --slate-900: #0a1128;
+  --slate-950: #040817;
+
+  --white-theme: #ffffff;
+}
+
+.light-theme {
+  /* Elegant Light Theme settings */
+  --slate-950: #f4f6fc; /* Main page background */
+  --slate-900: #ffffff; /* Bento item backgrounds */
+  --slate-850: #eef2f6; /* Sub-container backgrounds */
+  --slate-800: #cbd5e1; /* Borders */
+  --slate-705: #0f172a; /* High contrast text / main text color */
+  --slate-700: #1e293b; /* Secondary text color */
+  --slate-600: #334155;
+  --slate-500: #475569;
+  --slate-450: #64748b;
+  --slate-400: #5e7087; /* Soft text color */
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-150: #f1f5f9;
+  --slate-100: #f8fafc;
+  --slate-50: #ffffff;
+
+  --white-theme: #0f172a; /* All standard white text switches to deep slate */
 }
 
 /* Custom global rules for premium precision fintech layout styling */
 body {
   font-family: var(--font-sans);
-  background-color: #020617;
-  color: #e2e8f0;
+  background-color: var(--color-slate-950);
+  color: var(--color-slate-705);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -26,16 +104,71 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1c274a;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #2a3c6d;
 }
 
 /* Tabular figures OpenType config */
 .font-mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+
+/* Custom theme class mapper rule redirections to preserve clean layouts in both light and dark mode */
+#application-container .bg-white {
+  background-color: var(--color-slate-900) !important;
+}
+#application-container .border-\[\#eff4ff\] {
+  border-color: var(--color-slate-800) !important;
+}
+#application-container .border-slate-100 {
+  border-color: var(--color-slate-800) !important;
+}
+#application-container .border-slate-200 {
+  border-color: var(--color-slate-800) !important;
+}
+#application-container .bg-slate-50 {
+  background-color: var(--color-slate-850) !important;
+}
+#application-container .bg-slate-100 {
+  background-color: var(--color-slate-850) !important;
+}
+#application-container .bg-slate-150 {
+  background-color: var(--color-slate-850) !important;
+}
+#application-container .bg-\[\#eff4ff\] {
+  background-color: var(--color-slate-850) !important;
+}
+#application-container .text-\[\#0b1c30\] {
+  color: var(--color-slate-705) !important;
+}
+#application-container .text-\[\#050a18\] {
+  color: var(--color-slate-705) !important;
+}
+#application-container .text-slate-900 {
+  color: var(--color-slate-705) !important;
+}
+#application-container .text-slate-800 {
+  color: var(--color-slate-705) !important;
+}
+#application-container .text-slate-700 {
+  color: var(--color-slate-700) !important;
+}
+#application-container .text-slate-600 {
+  color: var(--color-slate-400) !important;
+}
+#application-container .bg-\[\#0b1c30\] {
+  background-color: var(--color-slate-850) !important;
+}
+
+/* Modal overlays background and light modes */
+.light-theme .fixed.inset-0.bg-\[\#0f172a\]\/40 {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+}
+.light-theme .fixed.inset-0.bg-slate-950\/40 {
+  background-color: rgba(15, 23, 42, 0.4) !important;
 }
