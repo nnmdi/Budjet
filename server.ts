@@ -307,12 +307,154 @@ app.post("/api/rooms/:id/sync", (req, res) => {
 });
 
 // -----------------------------------------------------------------------------
+// Core Machine Learning & Statistical Anomaly Detection Engine (Z-Score Outliers)
+// -----------------------------------------------------------------------------
+
+app.post("/api/analytics/anomalies", (req, res) => {
+  try {
+    const { transactions } = req.body as { transactions: Transaction[] };
+    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+      res.json({ success: true, anomalies: [] });
+      return;
+    }
+
+    const today = new Date();
+    // Consider transactions up to the last 180 days (6 months)
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 180);
+
+    const relevantTx = transactions.filter((t) => {
+      const d = new Date(t.date);
+      return !isNaN(d.getTime()) && d >= cutoffDate && d <= today;
+    });
+
+    // Group expenses by budget category. (We focus primarily on expenses since budget spikes are critical anomalies)
+    const expenses = relevantTx.filter((t) => t.type === "expense");
+    const groupMap: Record<string, Transaction[]> = {};
+
+    expenses.forEach((t) => {
+      if (!groupMap[t.budget]) groupMap[t.budget] = [];
+      groupMap[t.budget].push(t);
+    });
+
+    const anomalies: Array<{
+      id: string;
+      transactionId: string;
+      transaction: Transaction;
+      budget: string;
+      amount: number;
+      mean: number;
+      median: number;
+      stdDev: number;
+      zScore: number;
+      message: string;
+      severity: "critical" | "warning" | "low";
+    }> = [];
+
+    // Run statistical threshold tracking on each group
+    Object.keys(groupMap).forEach((budgetName) => {
+      const groupTx = groupMap[budgetName];
+      const count = groupTx.length;
+
+      if (count < 3) {
+        // Less than 3 transactions in 6 months is too sparse for reliable standard deviation.
+        // We can check for absolute massive spikes compared to baseline median if there are any.
+        if (count >= 1) {
+          const amounts = groupTx.map((t) => t.amount);
+          const medianVal = amounts.sort((a,b) => a - b)[Math.floor(amounts.length / 2)];
+          
+          groupTx.forEach((t) => {
+            // If expense is simple spike over median (e.g. 3.5x higher and substantial)
+            if (t.amount > medianVal * 3.5 && t.amount > 50) {
+              anomalies.push({
+                id: `anomaly-sparse-${t.id}`,
+                transactionId: t.id,
+                transaction: t,
+                budget: t.budget,
+                amount: t.amount,
+                mean: medianVal,
+                median: medianVal,
+                stdDev: 0,
+                zScore: 3.5,
+                message: `Significant spike of ${t.description} ($${t.amount}) is over 3.5x higher than your historical baseline of $${medianVal.toFixed(0)} for '${t.budget}'.`,
+                severity: "warning",
+              });
+            }
+          });
+        }
+        return;
+      }
+
+      const amounts = groupTx.map((t) => t.amount);
+      const sum = amounts.reduce((a, b) => a + b, 0);
+      const mean = sum / count;
+
+      // Median calculation
+      const sortedAmounts = [...amounts].sort((a, b) => a - b);
+      const mid = Math.floor(count / 2);
+      const median = count % 2 !== 0 ? sortedAmounts[mid] : (sortedAmounts[mid - 1] + sortedAmounts[mid]) / 2;
+
+      // Standard Deviation calculation
+      const varianceSum = amounts.reduce((total, val) => total + Math.pow(val - mean, 2), 0);
+      let stdDev = Math.sqrt(varianceSum / (count - 1));
+
+      // Defense boundary against standard deviation of identically priced items (like recurring Netflix bills)
+      const isConstant = stdDev < 0.05 * mean;
+      if (isConstant || stdDev === 0) {
+        stdDev = Math.max(5.0, mean * 0.1); // minimum $5 or 10% standard deviation of average
+      }
+
+      // Check for outlier entries (Z-score > 1.5)
+      groupTx.forEach((t) => {
+        const diff = t.amount - median;
+        const zScore = diff / stdDev;
+
+        // We focus on high-spend anomalies (Z-score > 1.5 and transaction being above the median baseline)
+        if (zScore >= 1.5 && t.amount > median + 15) {
+          let severity: "critical" | "warning" | "low" = "low";
+          if (zScore >= 2.5) severity = "critical";
+          else if (zScore >= 1.8) severity = "warning";
+
+          anomalies.push({
+            id: `anomaly-z-${t.id}`,
+            transactionId: t.id,
+            transaction: t,
+            budget: t.budget,
+            amount: t.amount,
+            mean,
+            median,
+            stdDev,
+            zScore,
+            message: `Your transaction '${t.description}' ($${t.amount}) is ${zScore.toFixed(1)} standard deviations higher than your 6-month average of $${mean.toFixed(0)} in '${t.budget}'.`,
+            severity,
+          });
+        }
+      });
+    });
+
+    // Sort key anomalies by date (most recent first) and slice to highest impact
+    anomalies.sort((a, b) => new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime());
+
+    res.json({
+      success: true,
+      anomalies: anomalies.slice(0, 15),
+    });
+  } catch (err: any) {
+    console.error("Backend outlier processing failed:", err);
+    res.status(500).json({ error: "Statistical analysis failed", details: err.message });
+  }
+});
+
+// -----------------------------------------------------------------------------
 // Vite Dev Server Middleware & Asset Serving
 // -----------------------------------------------------------------------------
 
 async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    // Development mode
+  const distPath = path.join(process.cwd(), "dist");
+  const hasDist = fs.existsSync(path.join(distPath, "index.html"));
+
+  if (process.env.NODE_ENV !== "production" || !hasDist) {
+    // Development mode or fallback if no static build has been processed
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -321,7 +463,6 @@ async function startServer() {
     console.log("Vite development server middleware mounted.");
   } else {
     // Production output asset serving
-    const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));

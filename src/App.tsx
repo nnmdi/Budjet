@@ -17,8 +17,12 @@ import {
   Activity, 
   CheckCircle2, 
   PiggyBank,
-  ArrowUpRight
+  ArrowUpRight,
+  Sparkles,
+  Tag,
+  Info
 } from "lucide-react";
+import { transactionClassifier } from "./utils/transactionClassifier";
 import { 
   Budget, 
   Transaction, 
@@ -37,20 +41,30 @@ import {
 // Component imports
 import Sidebar from "./components/Sidebar";
 import ActiveBudgets from "./components/ActiveBudgets";
+import AnomalyAlerts from "./components/AnomalyAlerts";
 import ProjectionInsights from "./components/ProjectionInsights";
 import RecentActivity from "./components/RecentActivity";
 import DueToday, { RecurringBill } from "./components/DueToday";
+import SmartProjections from "./components/SmartProjections";
 import Calculator from "./components/Calculator";
 import CollaborationHub from "./components/CollaborationHub";
 import Toast, { ToastItem } from "./components/Toast";
+import AuthOverlay from "./components/AuthOverlay";
 
 // Unique ID maker
 const makeId = () => Math.random().toString(36).substring(2, 9);
 const clientId = "client-" + makeId();
 
 export default function App() {
-  const userEmail = "na33009755@gmail.com";
-  const userName = "The Reliable Advisor";
+  const [userEmail, setUserEmail] = useState<string>(() => {
+    return localStorage.getItem("budgetmanager_user_email") || "";
+  });
+  const [userName, setUserName] = useState<string>(() => {
+    return localStorage.getItem("budgetmanager_user_name") || "";
+  });
+  const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
+    return sessionStorage.getItem("budgetmanager_is_guest") === "true";
+  });
 
   // --- Primary App States ---
   const [currentTab, setCurrentTab] = useState<string>("dashboard");
@@ -58,22 +72,26 @@ export default function App() {
 
   // --- Financial State (Fallback / Local-First Database) ---
   const [budgets, setBudgets] = useState<Record<string, Budget>>(() => {
-    const saved = localStorage.getItem("budgetmanager_v3_budgets");
+    const email = localStorage.getItem("budgetmanager_user_email") || "";
+    const saved = email ? localStorage.getItem(`budgetmanager_v3_budgets_${email}`) : null;
     return saved ? JSON.parse(saved) : INITIAL_BUDGETS;
   });
 
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem("budgetmanager_v3_transactions");
+    const email = localStorage.getItem("budgetmanager_user_email") || "";
+    const saved = email ? localStorage.getItem(`budgetmanager_v3_transactions_${email}`) : null;
     return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
   });
 
   const [paidBills, setPaidBills] = useState<string[]>(() => {
-    const saved = localStorage.getItem("budgetmanager_v3_paid_bills");
+    const email = localStorage.getItem("budgetmanager_user_email") || "";
+    const saved = email ? localStorage.getItem(`budgetmanager_v3_paid_bills_${email}`) : null;
     return saved ? JSON.parse(saved) : [];
   });
 
   const [dueBills, setDueBills] = useState<RecurringBill[]>(() => {
-    const saved = localStorage.getItem("budgetmanager_v4_due_bills");
+    const email = localStorage.getItem("budgetmanager_user_email") || "";
+    const saved = email ? localStorage.getItem(`budgetmanager_v4_due_bills_${email}`) : null;
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -97,8 +115,14 @@ export default function App() {
   // --- Detailed Detailed Page Inputs ---
   const [txAmount, setTxAmount] = useState("");
   const [txType, setTxType] = useState<"profit" | "expense">("expense");
-  const [txRecurrence, setTxRecurrence] = useState<"one-time" | "recurring">("one-time");
+  const [txRecurrence, setTxRecurrence] = useState<string>("one-time");
+  const [txCustomWeeks, setTxCustomWeeks] = useState<string>("3");
+  const [txOccurrencesCount, setTxOccurrencesCount] = useState<string>("12");
   const [txDescription, setTxDescription] = useState("");
+
+  const txClassification = useMemo(() => {
+    return transactionClassifier.classify(txDescription);
+  }, [txDescription]);
 
   // --- Quick Action Inputs ---
   const [showQuickCreate, setShowQuickCreate] = useState(false);
@@ -111,20 +135,28 @@ export default function App() {
 
   // --- Persistence & Offline Logging trigger ---
   useEffect(() => {
-    localStorage.setItem("budgetmanager_v3_budgets", JSON.stringify(budgets));
-  }, [budgets]);
+    if (userEmail) {
+      localStorage.setItem(`budgetmanager_v3_budgets_${userEmail}`, JSON.stringify(budgets));
+    }
+  }, [budgets, userEmail]);
 
   useEffect(() => {
-    localStorage.setItem("budgetmanager_v3_transactions", JSON.stringify(transactions));
-  }, [transactions]);
+    if (userEmail) {
+      localStorage.setItem(`budgetmanager_v3_transactions_${userEmail}`, JSON.stringify(transactions));
+    }
+  }, [transactions, userEmail]);
 
   useEffect(() => {
-    localStorage.setItem("budgetmanager_v3_paid_bills", JSON.stringify(paidBills));
-  }, [paidBills]);
+    if (userEmail) {
+      localStorage.setItem(`budgetmanager_v3_paid_bills_${userEmail}`, JSON.stringify(paidBills));
+    }
+  }, [paidBills, userEmail]);
 
   useEffect(() => {
-    localStorage.setItem("budgetmanager_v4_due_bills", JSON.stringify(dueBills));
-  }, [dueBills]);
+    if (userEmail) {
+      localStorage.setItem(`budgetmanager_v4_due_bills_${userEmail}`, JSON.stringify(dueBills));
+    }
+  }, [dueBills, userEmail]);
 
   useEffect(() => {
     if (roomId) {
@@ -154,6 +186,17 @@ export default function App() {
     };
   }, [roomId]);
 
+  // Train machine learning classifier on historical ledger records on startup
+  useEffect(() => {
+    if (transactions && transactions.length > 0) {
+      transactions.forEach((t) => {
+        if (t.description && t.budget) {
+          transactionClassifier.train(t.description, t.budget, false);
+        }
+      });
+    }
+  }, [transactions]);
+
   // Toast trigger routine
   const triggerToast = (message: string, type: "success" | "info" | "warning" = "success") => {
     const freshToast: ToastItem = { id: makeId(), message, type };
@@ -165,6 +208,45 @@ export default function App() {
 
   const dismissToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleLogin = (email: string, name: string) => {
+    localStorage.setItem("budgetmanager_user_email", email);
+    localStorage.setItem("budgetmanager_user_name", name);
+
+    // Pull from their user-specific storage partition
+    const savedBudgets = localStorage.getItem(`budgetmanager_v3_budgets_${email}`);
+    const savedTransactions = localStorage.getItem(`budgetmanager_v3_transactions_${email}`);
+    const savedPaidBills = localStorage.getItem(`budgetmanager_v3_paid_bills_${email}`);
+    const savedDueBills = localStorage.getItem(`budgetmanager_v4_due_bills_${email}`);
+
+    setBudgets(savedBudgets ? JSON.parse(savedBudgets) : INITIAL_BUDGETS);
+    setTransactions(savedTransactions ? JSON.parse(savedTransactions) : INITIAL_TRANSACTIONS);
+    setPaidBills(savedPaidBills ? JSON.parse(savedPaidBills) : []);
+    setDueBills(savedDueBills ? JSON.parse(savedDueBills) : []);
+
+    setUserEmail(email);
+    setUserName(name);
+    setIsGuestMode(false);
+    sessionStorage.removeItem("budgetmanager_is_guest");
+    triggerToast(`Welcome back, ${name}!`, "success");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("budgetmanager_user_email");
+    localStorage.removeItem("budgetmanager_user_name");
+    sessionStorage.removeItem("budgetmanager_is_guest");
+    setUserEmail("");
+    setUserName("");
+    setIsGuestMode(false);
+
+    // Reset current active states to standard demo dataset
+    setBudgets(INITIAL_BUDGETS);
+    setTransactions(INITIAL_TRANSACTIONS);
+    setPaidBills([]);
+    setDueBills([]);
+
+    triggerToast("Logged out successfully from personal vault.", "info");
   };
 
   // --- REAL-TIME COLLABORATIVE STREAMING (SSE) EFFECT ---
@@ -565,9 +647,27 @@ export default function App() {
     const descClean = txDescription.trim() || `Transaction on ${activeBudgetFilter}`;
 
     // Recurrence generation translating python recurrence interval computations
-    if (txRecurrence === "recurring") {
-      // Create 12 progressive monthly entries to match Python scheduling sequences
-      const dates = generateScheduleDates(new Date().toISOString().slice(0, 10), "m", undefined, 1, 12);
+    if (txRecurrence !== "one-time") {
+      let freq: "d" | "w" | "b" | "m" | "y" | "c" = "m";
+      let customUnit: "days" | "weeks" | "months" | "years" | undefined = undefined;
+      let customStep = 1;
+
+      if (txRecurrence === "weekly") {
+        freq = "w";
+      } else if (txRecurrence === "bi-weekly") {
+        freq = "b";
+      } else if (txRecurrence === "monthly" || txRecurrence === "recurring") {
+        freq = "m";
+      } else if (txRecurrence === "yearly") {
+        freq = "y";
+      } else if (txRecurrence === "custom-weeks") {
+        freq = "c";
+        customUnit = "weeks";
+        customStep = Math.max(1, parseInt(txCustomWeeks, 10) || 1);
+      }
+
+      const occurrencesCountNum = Math.max(1, Math.min(100, parseInt(txOccurrencesCount, 10) || 12));
+      const dates = generateScheduleDates(new Date().toISOString().slice(0, 10), freq, customUnit, customStep, occurrencesCountNum);
       const recurringTrxs: Transaction[] = dates.map((dStr) => ({
         id: "tx-" + makeId(),
         budget: activeBudgetFilter,
@@ -575,7 +675,7 @@ export default function App() {
         type: txType,
         amount: amountVal,
         description: descClean,
-        recurrence: "recurring"
+        recurrence: txRecurrence
       }));
 
       // Balance offset computation based on transactions happening strictly in past-to-now sequence
@@ -640,6 +740,9 @@ export default function App() {
 
       triggerToast("Action Successful: Transaction has been added to your ledger.", "success");
     }
+
+    // Train classification model on this user-vetted decision to tune weights
+    transactionClassifier.train(descClean, activeBudgetFilter);
 
     setTxAmount("");
     setTxDescription("");
@@ -890,6 +993,46 @@ export default function App() {
       .reduce((sum, t) => sum + t.amount, 0);
   }, [transactions]);
 
+  const liquidityComparison = useMemo(() => {
+    const today = new Date();
+    const currYear = today.getFullYear();
+    const currMonth = today.getMonth();
+
+    let prevTxSum = 0;
+    let currTxSum = 0;
+
+    transactions.forEach(t => {
+      const txDate = new Date(t.date);
+      if (isNaN(txDate.getTime())) return;
+      const isCurrentMonth = txDate.getFullYear() === currYear && txDate.getMonth() === currMonth;
+      const val = t.type === 'profit' ? t.amount : -t.amount;
+      if (isCurrentMonth) {
+        currTxSum += val;
+      } else {
+        prevTxSum += val;
+      }
+    });
+
+    if (prevTxSum === 0) {
+      return {
+        text: "First Month (System Initialized)",
+        percentage: 0,
+        isIncrease: true,
+        hasHistory: false
+      };
+    }
+
+    const pct = (currTxSum / Math.abs(prevTxSum)) * 100;
+    const isIncrease = pct >= 0;
+
+    return {
+      text: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs last month`,
+      percentage: pct,
+      isIncrease,
+      hasHistory: true
+    };
+  }, [transactions]);
+
   // --- DYNAMIC ADVISOR TIPS BASED ON REGISTERED BUDGETS ---
   const advisorTip = useMemo(() => {
     const budgetList = Object.values(budgets) as Budget[];
@@ -976,6 +1119,23 @@ export default function App() {
     };
   }, [budgets, transactions]);
 
+  // --- Auth Wall Gate ---
+  if (!userEmail && !isGuestMode) {
+    return (
+      <div className="min-h-screen bg-[#070b13] flex items-center justify-center">
+        <AuthOverlay 
+          onLogin={handleLogin} 
+          onGuest={() => {
+            setIsGuestMode(true);
+            sessionStorage.setItem("budgetmanager_is_guest", "true");
+            triggerToast("Guest Mode enabled. Progress will not be saved.", "warning");
+          }} 
+        />
+        <Toast toasts={toasts} onDismiss={dismissToast} />
+      </div>
+    );
+  }
+
   // Render proper sub views
   return (
     <div id="application-container" className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] pl-64 font-sans antialiased">
@@ -994,12 +1154,43 @@ export default function App() {
           setCurrentTab("calculator");
           setActiveBudgetFilter(null);
         }}
+        userEmail={userEmail}
+        userName={userName}
+        onLogout={handleLogout}
         onShowJoinModal={() => setShowJoinModal(true)}
         onDisconnectRoom={handleDisconnectRoom}
       />
 
       {/* Main Screen Container content area */}
       <main id="app-main" className="pt-6 pb-20 px-8">
+
+        {/* Guest Warning Banner */}
+        {!userEmail && isGuestMode && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-800 animate-fadeIn">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-amber-100 rounded-xl text-amber-600 shrink-0">
+                <AlertCircle className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <p className="font-extrabold text-[13px] text-slate-900 leading-tight">
+                  Guest Workspace / Transient Session
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Your transactions and budgets are NOT being saved. Create an account or log in to persist your personal ledger across sessions.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setIsGuestMode(false);
+                sessionStorage.removeItem("budgetmanager_is_guest");
+              }}
+              className="px-4 py-2 bg-rose-700 hover:bg-rose-600 text-white font-bold rounded-xl transition duration-150 shadow-md shadow-rose-700/10 hover:shadow-rose-600/20 text-xs shrink-0 cursor-pointer"
+            >
+              🔐 Create Account / Login
+            </button>
+          </div>
+        )}
         
         {/* Dynamic Nav Header Bar */}
         <header id="tab-nav-header" className="flex items-center justify-between mb-8 border-b border-[#eff4ff] pb-5">
@@ -1022,9 +1213,9 @@ export default function App() {
           <div id="header-actions" className="flex items-center gap-4">
             
             {/* Search Box */}
-            <div className="hidden sm:block text-slate-400 text-xs bg-white border border-[#e5eeff] px-4 py-1.5 rounded-lg w-52 text-slate-500 flex items-center justify-between font-medium">
-              <span>na33009755@gmail.com</span>
-              <Wifi className={`w-3.5 h-3.5 ${online ? "text-emerald-500" : "text-amber-500 animate-pulse"}`} />
+            <div className="hidden sm:block text-slate-400 text-xs bg-white border border-[#e5eeff] px-4 py-1.5 rounded-lg w-52 text-[#0b1c30] flex items-center justify-between font-medium">
+              <span className="truncate max-w-[150px]">{userEmail || "Guest Session"}</span>
+              <Wifi className={`w-3.5 h-3.5 shrink-0 ${online ? "text-emerald-500" : "text-amber-500 animate-pulse"}`} />
             </div>
 
             {/* Undo / Redo triggers */}
@@ -1090,6 +1281,9 @@ export default function App() {
               onDeleteTransactions={handleDeleteTransactionsBatch}
             />
           </div>
+        ) : currentTab === "projections" ? (
+          // Tab: Smart Projections & Asset Forecasts
+          <SmartProjections budgets={budgets} transactions={transactions} dueBills={dueBills} />
         ) : currentTab === "settings" ? (
           // Tab 4: Settings config panel
           <div className="bg-white border border-[#eff4ff] rounded-lg p-6 max-w-2xl mx-auto shadow-sm space-y-6">
@@ -1227,14 +1421,60 @@ export default function App() {
                       <label className="font-bold text-slate-500 uppercase tracking-widest text-[9px] block">Recurrence</label>
                       <select 
                         value={txRecurrence}
-                        onChange={(e) => setTxRecurrence(e.target.value as "one-time" | "recurring")}
+                        onChange={(e) => setTxRecurrence(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded font-medium text-slate-700 focus:border-[#2170e4] outline-none"
                       >
                         <option value="one-time">One-time</option>
-                        <option value="recurring">Monthly Dues</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="bi-weekly">Bi-weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                        <option value="custom-weeks">X Weeks Interval</option>
                       </select>
                     </div>
                   </div>
+
+                  {/* Progressive Recurrence Parameters Dashboard */}
+                  {txRecurrence !== "one-time" && (
+                    <div className="grid grid-cols-2 gap-3 bg-slate-50 border border-slate-150 p-2.5 rounded-lg animate-fadeIn text-[10px]">
+                      {txRecurrence === "custom-weeks" ? (
+                        <div className="space-y-1">
+                          <label className="font-bold text-slate-500 uppercase tracking-widest text-[8px] block">Weeks (X)</label>
+                          <input 
+                            type="number"
+                            min={1}
+                            max={52}
+                            required
+                            value={txCustomWeeks}
+                            onChange={(e) => setTxCustomWeeks(e.target.value)}
+                            className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded font-mono text-[#0b1c30] text-xs outline-none focus:border-[#2170e4]"
+                            placeholder="e.g. 3"
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <label className="font-bold text-slate-400 uppercase tracking-widest text-[8px] block">Frequency Rules</label>
+                          <div className="px-2 py-1.5 bg-slate-100 text-slate-600 rounded font-bold font-mono text-[9px] uppercase tracking-wider text-center">
+                            {txRecurrence === "weekly" ? "Every 1 Week" : txRecurrence === "bi-weekly" ? "Every 2 Weeks" : txRecurrence === "monthly" ? "Every Month" : "Every Year"}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="space-y-1">
+                        <label className="font-bold text-slate-500 uppercase tracking-widest text-[8px] block">Occurrences</label>
+                        <input 
+                          type="number"
+                          min={1}
+                          max={100}
+                          required
+                          value={txOccurrencesCount}
+                          onChange={(e) => setTxOccurrencesCount(e.target.value)}
+                          className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded font-mono text-[#0b1c30] text-xs outline-none focus:border-[#2170e4]"
+                          placeholder="e.g. 12"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Description Box */}
                   <div className="space-y-1">
@@ -1249,6 +1489,79 @@ export default function App() {
                       className="w-full px-3.5 py-2.5 border border-slate-200 rounded font-mono text-slate-900 focus:border-[#2170e4] outline-none"
                     />
                   </div>
+
+                  {/* Dynamic Naive Bayes Classifier Feedback panel */}
+                  {txDescription.trim().length >= 2 && (
+                    <div id="ai-categorization-panel" className="bg-[#f8fafc]/90 border border-slate-150 rounded-lg p-3 space-y-2 text-[10px]">
+                      <div className="flex items-center justify-between text-slate-500 pb-1.5 border-b border-dashed border-slate-200">
+                        <span className="font-bold uppercase tracking-wider text-[8px] flex items-center gap-1 text-indigo-600">
+                          <Sparkles className="w-3 h-3 animate-pulse text-indigo-500" /> Automated Pipeline
+                        </span>
+                        <span className="font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold text-[8.5px]">
+                          {Math.round(txClassification.confidence * 100)}% Probability
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-slate-400 text-[8.5px] uppercase tracking-wider">Classification</p>
+                          <p className="text-[11.5px] font-bold text-slate-900 flex items-center gap-1 mt-0.5">
+                            <Tag className="w-3 h-3 text-indigo-500" />
+                            <span>{txClassification.category}</span>
+                          </p>
+                        </div>
+
+                        {/* Interactive dynamic relocation action */}
+                        {activeBudgetFilter && activeBudgetFilter.toLowerCase().trim() !== txClassification.category.toLowerCase().trim() && (
+                          <div className="text-right">
+                            {budgets[txClassification.category] ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveBudgetFilter(txClassification.category);
+                                  triggerToast(`Switched workspace compartment to '${txClassification.category}'`, "info");
+                                }}
+                                className="py-1 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/50 rounded transition-all cursor-pointer text-[9px]"
+                              >
+                                Switch Category &rarr;
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const fresh: Budget = {
+                                    name: txClassification.category,
+                                    balance: 0,
+                                    created: new Date().toISOString().slice(0, 19).replace("T", " ")
+                                  };
+                                  setBudgets((prev) => ({ ...prev, [txClassification.category]: fresh }));
+                                  registerSyncAction("create_budget", { budget: fresh });
+                                  setActiveBudgetFilter(txClassification.category);
+                                  triggerToast(`Auto-created category & switched workspace to '${txClassification.category}'`, "success");
+                                }}
+                                className="py-1 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-100 rounded transition-all cursor-pointer text-[9px]"
+                              >
+                                Create &amp; Switch &rarr;
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Probabilities micro-distribution */}
+                      <div className="space-y-1 pt-1.5 border-t border-slate-100">
+                        <p className="text-[8px] text-slate-400 uppercase font-black tracking-wiest">Estimated Bayes Likelihood Space:</p>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[8.5px] text-slate-500">
+                          {txClassification.allProbabilities.slice(0, 4).map((p, idx) => (
+                            <div key={idx} className="flex justify-between items-center bg-slate-50 py-0.5 px-1.5 rounded border border-slate-100">
+                              <span className="truncate max-w-[65px] font-medium">{p.category}</span>
+                              <span className="text-indigo-600 font-bold">{(p.probability * 100).toFixed(0)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     type="submit"
@@ -1292,9 +1605,23 @@ export default function App() {
                     <Wallet className="w-5.5 h-5.5" />
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold mt-2 font-sans">
-                  <ArrowUpRight className="w-4 h-4" />
-                  <span>+2.4% vs last month</span>
+                <div className={`flex items-center gap-1.5 text-xs font-bold mt-2 font-sans ${
+                  !liquidityComparison.hasHistory 
+                    ? "text-slate-500" 
+                    : liquidityComparison.isIncrease 
+                      ? "text-emerald-600" 
+                      : "text-rose-600"
+                }`}>
+                  {liquidityComparison.hasHistory ? (
+                    liquidityComparison.isIncrease ? (
+                      <ArrowUpRight className="w-4 h-4" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4" />
+                    )
+                  ) : (
+                    <Info className="w-4 h-4" />
+                  )}
+                  <span>{liquidityComparison.text}</span>
                 </div>
               </div>
 
@@ -1460,6 +1787,11 @@ export default function App() {
               onCreateBudget={() => setShowQuickCreate(true)}
             />
 
+            {/* Statistical Outliers & Anomaly Alerts Hub */}
+            <div className="my-2">
+              <AnomalyAlerts transactions={transactions} />
+            </div>
+
             {/* Split layout: Projection Insights (Left) & Compact Recent Activity (Right) */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
               
@@ -1468,7 +1800,7 @@ export default function App() {
                 <ProjectionInsights 
                   totalLiquidity={totalLiquidity} 
                   onRunCalculator={() => {
-                    setCurrentTab("calculator");
+                    setCurrentTab("projections");
                   }}
                 />
               </div>

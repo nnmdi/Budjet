@@ -11,7 +11,7 @@ export interface Transaction {
   type: 'profit' | 'expense';
   amount: number;
   description: string;
-  recurrence: 'one-time' | 'recurring';
+  recurrence: string;
   synced?: boolean;
 }
 

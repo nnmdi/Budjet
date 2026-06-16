@@ -10,7 +10,8 @@ import {
   Users, 
   Globe, 
   Wifi, 
-  WifiOff 
+  WifiOff, 
+  TrendingUp 
 } from "lucide-react";
 import { Collaborator } from "../types";
 
@@ -22,8 +23,10 @@ interface SidebarProps {
   activeUsers: Collaborator[];
   onTriggerNewScenario: () => void;
   userEmail?: string;
+  userName?: string;
   onShowJoinModal: () => void;
   onDisconnectRoom: () => void;
+  onLogout?: () => void;
 }
 
 export default function Sidebar({
@@ -34,14 +37,17 @@ export default function Sidebar({
   activeUsers,
   onTriggerNewScenario,
   userEmail = "na33009755@gmail.com",
+  userName = "The Reliable Advisor",
   onShowJoinModal,
-  onDisconnectRoom
+  onDisconnectRoom,
+  onLogout
 }: SidebarProps) {
   
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "budgets", label: "Budgets", icon: Wallet },
     { id: "transactions", label: "Transactions", icon: History },
+    { id: "projections", label: "Smart Projections", icon: TrendingUp },
     { id: "calculator", label: "Calculator", icon: Calculator },
   ];
 
@@ -107,7 +113,7 @@ export default function Sidebar({
                       title={userEmail}
                       className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-950 text-rose-300 border border-rose-900 max-w-[100px] truncate"
                     >
-                      Me (na33)
+                      Me ({userName ? userName.slice(0, 8) : "Me"})
                     </span>
                     {/* Other connected users */}
                     {activeUsers.slice(0, 3).map((u, i) => (
@@ -179,7 +185,7 @@ export default function Sidebar({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-slate-200 truncate">Reliable Advisor</p>
+            <p className="text-xs font-bold text-slate-200 truncate">{userName}</p>
             <p className="text-[10px] text-slate-400 truncate">{userEmail}</p>
           </div>
         </div>
@@ -189,7 +195,17 @@ export default function Sidebar({
             <HelpCircle className="w-4 h-4" />
             <span>Help</span>
           </button>
-          <button id="btn-sidebar-logout" onClick={() => alert("Logout simulated successfully. Workspace remains synced to server.")} className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer">
+          <button 
+            id="btn-sidebar-logout" 
+            onClick={() => {
+              if (onLogout) {
+                onLogout();
+              } else {
+                alert("Logout simulated successfully. Workspace remains synced to server.");
+              }
+            }} 
+            className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer"
+          >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
           </button>
