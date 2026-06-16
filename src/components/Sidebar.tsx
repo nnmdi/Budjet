@@ -47,7 +47,7 @@ export default function Sidebar({
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "budgets", label: "Budgets", icon: Wallet },
     { id: "transactions", label: "Transactions", icon: History },
-    { id: "projections", label: "Smart Projections", icon: TrendingUp },
+    { id: "projections", label: "Money Forecast", icon: TrendingUp },
     { id: "calculator", label: "Calculator", icon: Calculator },
   ];
 
@@ -62,7 +62,7 @@ export default function Sidebar({
           <div className="w-8 h-8 bg-rose-700 rounded-lg flex items-center justify-center font-bold text-lg text-white shadow-md shadow-rose-700/35">✈️</div>
           <div>
             <h1 id="brand-title" className="text-lg font-bold tracking-tight text-white leading-tight">BUDJET</h1>
-            <p id="brand-subtitle" className="text-[9px] font-semibold tracking-widest text-rose-400 uppercase">The Reliable Advisor</p>
+            <p id="brand-subtitle" className="text-[9px] font-semibold tracking-widest text-rose-400 uppercase">Your smart money helper</p>
           </div>
         </div>
 
@@ -72,12 +72,12 @@ export default function Sidebar({
           className="mb-6 p-4 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-900/80 transition-all text-xs"
         >
           <div className="flex items-center justify-between gap-2 mb-2.5">
-            <span className="font-semibold text-slate-400 uppercase tracking-wider text-[9px]">Sync Engine</span>
+            <span className="font-semibold text-slate-400 uppercase tracking-wider text-[9px]">My Connection</span>
             <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold text-[9px] ${
               online ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
             }`}>
               <span className={`w-1.5 h-1.5 rounded-full ${online ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`}></span>
-              {online ? "Online" : "Offline Ready"}
+              {online ? "Online" : "Saved Offline"}
             </span>
           </div>
 
@@ -87,7 +87,7 @@ export default function Sidebar({
               className="w-full py-2 px-3 bg-rose-700 hover:bg-rose-600 text-xs font-semibold text-white rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-rose-700/30"
             >
               <Radio className="w-3.5 h-3.5 animate-pulse" />
-              Go Collaborative
+              Work with Friends
             </button>
           ) : (
             <div className="space-y-2">
@@ -105,7 +105,7 @@ export default function Sidebar({
                 <div className="mt-2">
                    <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1 font-semibold">
                     <Users className="w-3 h-3" />
-                    <span>Peer Presence ({activeUsers.length + 1})</span>
+                    <span>Who is online ({activeUsers.length + 1})</span>
                   </div>
                   <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto pt-1">
                     {/* Logged in self */}
@@ -191,7 +191,7 @@ export default function Sidebar({
         </div>
 
         <div className="flex flex-col gap-1 text-slate-400 text-xs font-medium">
-          <button id="btn-sidebar-help" onClick={() => alert("BUDJET support: Please refer to our Precision Wealth user manual. Real-Time and local action logs enable persistent offline budgeting.")} className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer">
+          <button id="btn-sidebar-help" onClick={() => alert("Need help? We save your money plans automatically, so you can check and update them even without internet!")} className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer">
             <HelpCircle className="w-4 h-4" />
             <span>Help</span>
           </button>
@@ -201,7 +201,7 @@ export default function Sidebar({
               if (onLogout) {
                 onLogout();
               } else {
-                alert("Logout simulated successfully. Workspace remains synced to server.");
+                alert("You logged out! Your app is still saved and ready on the server.");
               }
             }} 
             className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer"

@@ -44,7 +44,7 @@ import ActiveBudgets from "./components/ActiveBudgets";
 import AnomalyAlerts from "./components/AnomalyAlerts";
 import ProjectionInsights from "./components/ProjectionInsights";
 import RecentActivity from "./components/RecentActivity";
-import DueToday, { RecurringBill } from "./components/DueToday";
+import DueToday, { RecurringBill, getNextDueDate } from "./components/DueToday";
 import SmartProjections from "./components/SmartProjections";
 import Calculator from "./components/Calculator";
 import CollaborationHub from "./components/CollaborationHub";
@@ -756,8 +756,6 @@ export default function App() {
 
   // --- settle Dues panel action hook ---
   const handlePayBill = (bill: RecurringBill) => {
-    if (paidBills.includes(bill.id)) return;
-
     // Pick target budget automatically or fallback to first budget
     const targetBudget = activeBudgetFilter || Object.keys(budgets)[0];
     if (!targetBudget) {
@@ -765,13 +763,16 @@ export default function App() {
       return;
     }
 
+    const currentDueDate = bill.dueDate || new Date().toISOString().slice(0, 10);
+    const nextDate = getNextDueDate(currentDueDate, bill.frequency);
+
     const newTrx: Transaction = {
       id: "tx-" + makeId(),
       budget: targetBudget,
       date: new Date().toISOString().slice(0, 19).replace("T", " "),
       type: bill.type,
       amount: bill.amount,
-      description: `${bill.name} - Settle Due Today`,
+      description: `${bill.name} - Settle Recurring Flow`,
       recurrence: bill.frequency.toLowerCase() as any || "one-time"
     };
 
@@ -784,7 +785,20 @@ export default function App() {
     });
 
     setTransactions((prev) => [...prev, newTrx]);
-    setPaidBills((prev) => [...prev, bill.id]);
+    
+    // Advance the bill's due date to the next recurring cycle
+    setDueBills((prev) => 
+      prev.map((b) => {
+        if (b.id === bill.id) {
+          return {
+            ...b,
+            dueDate: nextDate
+          };
+        }
+        return b;
+      })
+    );
+
     registerSyncAction("add_transaction", { transaction: newTrx });
 
     // Store undo step
@@ -794,7 +808,13 @@ export default function App() {
       timestamp: Date.now()
     });
 
-    triggerToast(`Settle Successful: registered payment for ${bill.name}`, "success");
+    // Helper to format the next date beautifully for user-facing feedback
+    const formattedNext = nextDate.split("-");
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthName = formattedNext[1] ? (months[parseInt(formattedNext[1], 10) - 1] || formattedNext[1]) : "";
+    const displayNext = monthName ? `${monthName} ${parseInt(formattedNext[2], 10)}, ${formattedNext[0]}` : nextDate;
+
+    triggerToast(`Settle Successful: Registered payment for ${bill.name}. Next recurrence: ${displayNext}`, "success");
   };
 
   const handleCreateBill = (bill: RecurringBill) => {

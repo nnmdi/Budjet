@@ -286,7 +286,7 @@ export default function RecentActivity({
 
       <div className="flex items-center justify-between text-[11px] text-slate-500 font-sans mt-3 border-t border-slate-800 pt-3">
         <span>Showing {filtered.length} of {transactions.filter(t => !selectedBudgetFilter || t.budget === selectedBudgetFilter).length} total logs</span>
-        <span>Precision Cryptographic Ledger v2.4.1</span>
+        <span>My Money Journal v2.4.1</span>
       </div>
     </div>
   );

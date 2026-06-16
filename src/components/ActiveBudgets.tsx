@@ -30,9 +30,9 @@ export default function ActiveBudgets({ budgets, transactions, onManageBudget, o
           <button 
             onClick={() => {
               if (onShowToast) {
-                onShowToast("Currently reviewing all active structural portfolio asset buckets.", "info");
+                onShowToast("Showing your budget categories and spending limits!", "info");
               } else {
-                alert("Reviewing all structural portfolio asset buckets...");
+                alert("Checking all budgets...");
               }
             }} 
             className="text-xs font-bold text-rose-400 hover:text-rose-300 hover:underline cursor-pointer"
@@ -49,24 +49,24 @@ export default function ActiveBudgets({ budgets, transactions, onManageBudget, o
           const isEmergency = bg.name.toLowerCase().includes("emergency") || bg.name.toLowerCase().includes("guard") || bg.name.toLowerCase().includes("buffer");
           
           let icon = <Landmark className="w-5 h-5 text-rose-400" />;
-          let subText = "Institutional Asset Bucket";
+          let subText = "General Category";
           let statusText = "On Track";
           let statusColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
 
           if (isSavings) {
             icon = <Landmark className="w-5 h-5 text-rose-400" />;
-            subText = "Compound Growth Reserve";
-            statusText = "Optimized";
+            subText = "Future Savings Pool";
+            statusText = "Growing";
             statusColor = "bg-sky-500/10 text-sky-400 border-sky-500/20";
           } else if (isEmergency) {
             icon = <Sparkles className="w-5 h-5 text-rose-400" />;
-            subText = "Emergency Safety Reserve";
-            statusText = "Secured";
+            subText = "Safety Fund";
+            statusText = "Safe & Secure";
             statusColor = "bg-teal-500/10 text-teal-400 border-teal-500/20";
           } else {
             icon = <Compass className="w-5 h-5 text-rose-400" />;
-            subText = "Flexible Financial Strategy";
-            statusText = bg.balance > 500 ? "Fully Funded" : "Active Pool";
+            subText = "Spending Envelope";
+            statusText = bg.balance > 500 ? "Fully Prepared" : "Active Pool";
             statusColor = bg.balance > 500 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20";
           }
 
@@ -91,7 +91,7 @@ export default function ActiveBudgets({ budgets, transactions, onManageBudget, o
                 </div>
 
                 <div className="flex items-baseline justify-between mt-4">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Allocated</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Money In Box</span>
                   <span className="text-lg font-bold text-white tracking-tight font-mono">
                     {formatCurrency(allocatedSum)}
                   </span>

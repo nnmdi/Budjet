@@ -21,15 +21,17 @@ export default function ProjectionInsights({ onRunCalculator, totalLiquidity }: 
           <span className="p-1.5 rounded-full bg-white/10 text-white">
             <TrendingUp className="w-4.5 h-4.5" />
           </span>
-          <span className="text-[10px] font-bold text-rose-100 uppercase tracking-widest font-sans">Projection Insights</span>
+          <span className="text-[10px] font-bold text-rose-100 uppercase tracking-widest font-sans">Money Tips</span>
         </div>
 
         <h4 className="text-xl font-black tracking-tight text-white leading-tight">
-          Hypothetical Wealth Accelerator
+          My 12-Month Money Goal
         </h4>
 
         <p className="text-sm text-rose-100 leading-relaxed font-sans font-medium">
-          Based on your current savings velocity across active streams, your combined portfolio growth is projected to exceed <strong className="text-white font-black font-mono underline decoration-wavy decoration-rose-300 decoration-1">${targetFutureVal.toLocaleString('en-US', { maximumFractionDigits: 0 })}</strong> within the next 12 months.
+          Based on how much you have saved so far, you are on track to grow your total money to <strong className="text-white font-black font-mono underline decoration-wavy decoration-rose-300 decoration-1">
+            ${targetFutureVal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+          </strong> over the next year!
         </p>
 
         <button
@@ -37,13 +39,13 @@ export default function ProjectionInsights({ onRunCalculator, totalLiquidity }: 
           id="btn-run-analysis"
           className="mt-2 py-2.5 px-5 bg-white hover:bg-rose-50 text-rose-800 hover:text-rose-950 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md"
         >
-          Run Analysis
+          Try What-If Calculator
         </button>
       </div>
 
       {/* Glassmorphic miniature chart representing step progression */}
       <div className="w-full md:w-56 p-4 rounded-xl bg-rose-900/80 border border-rose-700/50 flex flex-col justify-between h-40 z-10">
-        <span className="text-[9px] font-bold text-rose-100 uppercase tracking-widest block font-sans">Asset Blocks</span>
+        <span className="text-[9px] font-bold text-rose-100 uppercase tracking-widest block font-sans">My Savings Goal</span>
         
         {/* Dynamic bar steps */}
         <div className="flex items-end gap-2.5 h-20 pt-4">

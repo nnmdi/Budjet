@@ -166,7 +166,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
       return (
         <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-center text-xs text-slate-400 gap-2">
           <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <span>Refining outlier statistics...</span>
+          <span>Looking for weird spending spikes...</span>
         </div>
       );
     }
@@ -178,11 +178,11 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
         </div>
         <div className="space-y-0.5">
           <p className="font-bold text-slate-800 flex items-center gap-1.5 leading-tight">
-            <span>Smart Spending Baseline Active</span>
+            <span>Everything Looks Great</span>
             <span className="font-mono bg-emerald-100/75 text-emerald-700 px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider">HEALTHY</span>
           </p>
           <p className="text-[11px] text-slate-500 leading-normal font-sans">
-            No unexpected spending spikes or outliers detected in your categories. Your recent activity matches typical historical baselines.
+            No unexpected spending spikes found in your budget categories. Everything looks normal!
           </p>
         </div>
       </div>
@@ -225,25 +225,25 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
           <div className="space-y-1">
             <div className="flex items-center flex-wrap gap-2">
               <h4 className="text-sm font-black tracking-tight text-slate-800">
-                Insights &amp; Statistical Alerts
+                Unexpected Spending Alerts
               </h4>
               <div className="flex items-center gap-1 font-mono text-[9px] font-bold">
                 {criticalCount > 0 && (
                   <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full border border-red-200 leading-none">
-                    {criticalCount} Critical Outlier{criticalCount > 1 ? "s" : ""}
+                    {criticalCount} Huge Spike{criticalCount > 1 ? "s" : ""}
                   </span>
                 )}
                 {warningCount > 0 && (
                   <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200 leading-none">
-                    {warningCount} Budget Spike{warningCount > 1 ? "s" : ""}
+                    {warningCount} Minor Spike{warningCount > 1 ? "s" : ""}
                   </span>
                 )}
               </div>
             </div>
             <p className="text-[11.5px] text-slate-500 font-sans leading-normal">
               {criticalCount > 0 
-                ? `Alert: Detected ${criticalCount} transaction${criticalCount > 1 ? "s" : ""} that are significantly higher than your typical budget average.`
-                : `Detected minor spending deviations. Click to inspect threshold calculations.`
+                ? `Alert: You spent way more than usual in some budget boxes.`
+                : `Some minor spending spikes found. Click to see what they are.`
               }
             </p>
           </div>
@@ -263,9 +263,9 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
           <div className="flex items-start gap-2.5 p-3 bg-[#eff4ff]/60 border border-[#dce9ff] rounded-xl text-[10.5px] text-slate-600 shadow-inner">
             <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
             <div className="space-y-0.5 leading-relaxed font-sans">
-              <p className="font-bold text-slate-800">How is this determined?</p>
-              <p>
-                Our system analyzes historical transaction trends across each budget category. By comparing active transactions against typical spending ranges, we detect unusually high expenses or irregular spikes, highlighting patterns that may warrant closer inspection.
+              <p className="font-bold text-slate-800 font-sans">How does this work?</p>
+              <p className="font-sans text-[11px]">
+                We look at how much you usually spend in each budget box. If you spend a bunch more than usual, we flag it so you can make sure it was on purpose.
               </p>
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
                           ? "bg-rose-50 text-rose-700 border border-rose-100"
                           : "bg-amber-50 text-amber-800 border border-amber-100"
                       }`}>
-                        {anomaly.severity === "critical" ? "CRITICAL OUTLIER" : "BUDGET SPIKE"}
+                        {anomaly.severity === "critical" ? "HUGE SPIKE" : "MINOR SPIKE"}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">{formattedDate}</span>
                       <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-1.5 bg-slate-100 rounded text-[9px]">{anomaly.budget}</span>
@@ -299,9 +299,9 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
                     {/* Standard Deviation Gauge Slider */}
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-[8.5px] font-mono text-slate-400">
-                        <span>Baseline (Average: ${anomaly.mean.toFixed(0)})</span>
+                        <span>Average: ${anomaly.mean.toFixed(0)}</span>
                         <span className={anomaly.severity === "critical" ? "text-rose-600 font-bold" : "text-amber-700 font-bold"}>
-                          +{anomaly.zScore.toFixed(1)}x Spending Deviation
+                          {anomaly.amount > anomaly.mean ? `Over average by $${(anomaly.amount - anomaly.mean).toFixed(0)}` : "Spike"}
                         </span>
                       </div>
                       
@@ -325,15 +325,15 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
                   <div className="flex items-center gap-2">
                     <div className="text-right whitespace-nowrap">
                       <p className="text-xs font-black text-slate-900 font-mono">${anomaly.amount.toFixed(2)}</p>
-                      <p className="text-[9px] text-slate-400">Transaction Value</p>
+                      <p className="text-[9px] text-slate-400">Amount</p>
                     </div>
 
                     <button
                       onClick={(e) => handleDismiss(anomaly.id, e)}
                       className="py-1 px-2.5 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-[10px] font-bold rounded text-slate-500 cursor-pointer transition-colors"
-                      title="Mute alert for this session"
+                      title="Hide this alert"
                     >
-                      Dismiss
+                      Got It
                     </button>
                   </div>
                 </div>

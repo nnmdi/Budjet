@@ -211,9 +211,9 @@ export default function Calculator({ budgets }: CalculatorProps) {
       
       {/* Title Header */}
       <div>
-        <h2 id="calculator-heading" className="text-2xl font-black tracking-tight text-white">Hypothetical Budget Calculator</h2>
+        <h2 id="calculator-heading" className="text-2xl font-black tracking-tight text-white">What-If Money Calculator</h2>
         <p className="text-sm text-slate-400 max-w-2xl mt-1.5 leading-relaxed font-sans font-medium">
-          Run 'What-If' scenarios without affecting your live data. Test the impact of major purchases, new income streams, or recurring subscriptions on your long-term wealth.
+          Try out what-if tests with your money! See how buying a new phone, getting a job, or setting up a monthly subscription changes your savings over time without messing with your actual budget.
         </p>
       </div>
 
@@ -225,7 +225,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
           {/* Section 01: Select Financial Base */}
           <div id="selection-financial-base" className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
             <h4 className="text-[10px] font-bold text-slate-450 uppercase tracking-widest mb-4">
-              01. Select Financial Base
+              1. Choose Your Starting Money
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -243,9 +243,9 @@ export default function Calculator({ budgets }: CalculatorProps) {
                   <Briefcase className="w-5 h-5" />
                 </div>
                 <div>
-                  <h5 className="font-bold text-sm text-white">Existing Budget</h5>
-                  <p className="text-[11px] text-slate-400 mt-1 lines-2 font-normal leading-normal">
-                    Sync with current live balances and ongoing recurring costs automatically.
+                  <h5 className="font-bold text-sm text-white">Use My Actual Budget</h5>
+                  <p className="text-[11px] text-slate-400 mt-1 lines-2 font-normal leading-normal font-sans">
+                    Start with your actual cash boxes and ongoing recurring costs automatically.
                   </p>
                 </div>
               </button>
@@ -264,9 +264,9 @@ export default function Calculator({ budgets }: CalculatorProps) {
                   <DollarSign className="w-5 h-5" />
                 </div>
                 <div>
-                  <h5 className="font-bold text-sm text-white">Custom Balance</h5>
-                  <p className="text-[11px] text-slate-400 mt-1 lines-2 font-normal leading-normal">
-                    Start from zero or enter a specific manual starting amount.
+                  <h5 className="font-bold text-sm text-white">Start with Custom Amount</h5>
+                  <p className="text-[11px] text-slate-400 mt-1 lines-2 font-normal leading-normal font-sans">
+                    Make up a starting amount of money from scratch.
                   </p>
                 </div>
               </button>
@@ -275,7 +275,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
             {/* Input fields based on baseType selection */}
             {baseType === "existing" ? (
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400">Linked Budget Reference</label>
+                <label className="text-xs font-bold text-slate-400">Choose budget box to use</label>
                 <select
                   value={selectedBudget}
                   onChange={(e) => setSelectedBudget(e.target.value)}
@@ -293,7 +293,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
               </div>
             ) : (
               <div className="max-w-sm space-y-1">
-                <label className="text-xs font-bold text-slate-400 block uppercase tracking-widest">Initial Balance ($)</label>
+                <label className="text-xs font-bold text-slate-400 block uppercase tracking-widest">Starting Money ($)</label>
                 <input
                   type="number"
                   placeholder="e.g. 15000"
@@ -308,7 +308,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
           {/* Section 02: Scenario Builder Form */}
           <div id="scenario-builder" className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-              02. Scenario Builder
+              2. Add What-If Items
             </h4>
 
             <form onSubmit={handleAddEntry} className="space-y-4">
@@ -322,26 +322,26 @@ export default function Calculator({ budgets }: CalculatorProps) {
                     onChange={(e) => setFormType(e.target.value as "profit" | "expense")}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-rose-500 font-medium outline-none cursor-pointer"
                   >
-                    <option value="expense">Expense</option>
-                    <option value="profit">Profit</option>
+                    <option value="expense font-sans">Expense (You pay)</option>
+                    <option value="profit font-sans">Income (You get paid)</option>
                   </select>
                 </div>
 
                 {/* Frequency selector */}
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Frequency</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">How often</label>
                   <select
                     value={formFreq}
                     onChange={(e) => setFormFreq(e.target.value as any)}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-rose-500 font-medium outline-none cursor-pointer"
                   >
-                    <option value="o">One-time</option>
-                    <option value="d">Daily</option>
-                    <option value="w">Weekly</option>
-                    <option value="b">Biweekly</option>
-                    <option value="m">Monthly</option>
-                    <option value="y">Yearly</option>
-                    <option value="c">Custom Internal</option>
+                    <option value="o">Just once</option>
+                    <option value="d">Every day</option>
+                    <option value="w">Every week</option>
+                    <option value="b">Every two weeks</option>
+                    <option value="m">Every month</option>
+                    <option value="y">Every year</option>
+                    <option value="c">Custom timing</option>
                   </select>
                 </div>
 
@@ -404,7 +404,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
                 {/* Scheduled Count */}
                 {formFreq !== "o" && (
                   <div>
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Schedule count</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Number of times</label>
                     <input
                       type="number"
                       min={1}
@@ -431,13 +431,13 @@ export default function Calculator({ budgets }: CalculatorProps) {
             {/* Scrolling checklist of current sandbox entries */}
             <div className="mt-6 border-t border-slate-800 pt-6">
               <div className="flex items-center justify-between mb-3 text-xs font-semibold text-slate-400">
-                <span>Current Scenario Entries ({entries.length})</span>
+                <span>What-If List ({entries.length})</span>
                 {entries.length > 0 && (
                   <button 
                     onClick={handleClearScenario}
                     className="text-rose-400 hover:text-rose-300 font-bold hover:underline cursor-pointer"
                   >
-                    Clear Scenario
+                    Clear All
                   </button>
                 )}
               </div>
@@ -455,8 +455,10 @@ export default function Calculator({ budgets }: CalculatorProps) {
                         <div>
                           <p className="font-bold text-white">{entry.description}</p>
                           <p className="text-[10px] text-slate-400 mt-0.5">
-                            Frequency: <span className="font-semibold uppercase text-rose-400">{entry.frequency}</span> 
-                            {entry.frequency !== "o" && ` • Running x${entry.count}`}
+                            Repeat: <span className="font-semibold uppercase text-rose-400">
+                              {entry.frequency === "o" ? "Once" : entry.frequency}
+                            </span> 
+                            {entry.frequency !== "o" && ` • Running ${entry.count} times`}
                           </p>
                         </div>
                       </div>
@@ -479,7 +481,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
 
                 {entries.length === 0 && (
                   <div className="py-6 border-2 border-dashed border-slate-850 bg-slate-950/40 rounded-xl text-center text-xs text-slate-400 font-sans italic">
-                    Sandbox contains zero prospective cashflows. Populate cards above.
+                    Your checklist is empty! Add some what-if items using the form above.
                   </div>
                 )}
               </div>
@@ -493,24 +495,24 @@ export default function Calculator({ budgets }: CalculatorProps) {
           {/* Hypothetical 12-Month Projection */}
           <div id="hypothetical-projection" className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm text-xs">
             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-              Hypothetical 12-Month Projection
+              What-If Year Trend
             </h4>
 
             <div className="space-y-3.5">
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-slate-400">Starting Balance</span>
+                <span className="text-slate-400 font-sans">Start Amount</span>
                 <span className="font-bold font-mono text-white">{formatCurrency(startingBalance)}</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-slate-400">Projected Additions</span>
+                <span className="text-slate-400 font-sans">Money You Will Get</span>
                 <span className="font-semibold font-mono text-emerald-400">+{formatCurrency(scenarioStats.projectedAdditions)}</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-slate-400">Projected Expenses</span>
+                <span className="text-slate-400 font-sans">Money You Will Spend</span>
                 <span className="font-semibold font-mono text-rose-400">-{formatCurrency(scenarioStats.projectedExpenses)}</span>
               </div>
               <div className="flex flex-col gap-1 pt-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ending Balance (EST.)</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Ending Money (EST.)</span>
                 <p className="text-2xl font-black font-mono tracking-tight text-white mt-1">
                   {formatCurrency(scenarioStats.endingBalance)}
                 </p>
@@ -526,7 +528,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
                   <p className="text-[10px] text-slate-400 mt-2 font-sans font-medium">
                     This is a <strong className={scenarioStats.changePercentage >= 0 ? "text-emerald-400" : "text-rose-400"}>
                       {Math.abs(scenarioStats.changePercentage).toFixed(1)}% {scenarioStats.changePercentage >= 0 ? "increase" : "decrease"}
-                    </strong> compared to starting liquid assets.
+                    </strong> compared to your starting stash of money.
                   </p>
                 </div>
               </div>
@@ -535,9 +537,9 @@ export default function Calculator({ budgets }: CalculatorProps) {
 
           {/* Forecast Trend Chart Area matching screengrab 3 layout */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-rose-450" />
-              <span>Projected Cashflow Trend</span>
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5 font-sans">
+              <TrendingUp className="w-3.5 h-3.5 text-rose-450 font-sans" />
+              <span>How Your Savings Will look</span>
             </h4>
             
             {/* Custom Responsive SVG Chart */}
@@ -584,16 +586,16 @@ export default function Calculator({ budgets }: CalculatorProps) {
 
           {/* Quick suggestions optimizer box to add fidelity */}
           <div id="quick-optimizer-tip" className="bg-rose-950/25 border border-rose-500/15 rounded-2xl p-5 space-y-3">
-            <h5 className="font-bold text-xs text-rose-400 flex items-center gap-1.5 uppercase tracking-widest text-[10px]">
-              <Lightbulb className="w-4 h-4 text-amber-400 animate-pulse" />
-              <span>Optimize Scenario</span>
+            <h5 className="font-bold text-xs text-rose-400 flex items-center gap-1.5 uppercase tracking-widest text-[10px] font-sans">
+              <Lightbulb className="w-4 h-4 text-amber-400 animate-pulse font-sans" />
+              <span>Smart Money Tips</span>
             </h5>
             <p className="text-xs text-slate-400 font-sans leading-relaxed font-medium">
-              Based on your sandbox entries (like {entries[1]?.description || "recurring expenses"}), we offer structured optimizations:
+              Here are some quick tips based on your what-if items:
             </p>
             <ul className="text-[11px] text-slate-400 font-sans space-y-1.5 list-disc pl-4 leading-normal font-medium">
-              <li>Deploying liquid additions to high-yield bonds can expand income by margins of <span className="font-bold text-emerald-400">+$120.00/mo</span>.</li>
-              <li>Consolidating recurring subscription structures can reclaim up to <span className="font-bold text-rose-450">$14.99/mo</span>.</li>
+              <li>Putting some extra cash in a simple high-interest savings box can grow your money by <span className="font-bold text-emerald-400">+$120.00/mo</span>.</li>
+              <li>Canceling streaming or game subscriptions you don't use can save you up to <span className="font-bold text-rose-450">$14.99/mo</span>.</li>
             </ul>
           </div>
         </div>
