@@ -1,6 +1,6 @@
 {
   "name": "BUDJET",
-  "description": "A collaborative, local-first budget manager and financial task planner with offline support, real-time sync, multi-level undo/redo, and hypothetical scenarios.",
+  "description": "An automated, collaborative budget tracker and treasury forecasting app with 90-day cashflow models, what-if simulators, and real-time multiplayer sync on Cloud Run.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

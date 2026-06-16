@@ -1,52 +1,50 @@
-# ✈️ BUDJET — Premium Wealth Admin & Real-Time Portfolio Advisor
+# 📈 BUDJET: Automated Financial Tracking & Treasury Forecasting Pipeline
 
-**BUDJET** is a full-stack, enterprise-grade wealth administration dashboard and predictive modeling platform. Designed with a Swiss-minimalist aesthetic and featuring real-time collaborative workspace synchronization, multi-budget analytics, dynamic advisory engines, and offline-first persistence.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-success)](https://ais-pre-t3zydiqi6qmoghgbmbm5vs-605585368137.us-west2.run.app) 
+*Explore our live app on Google Cloud Run: [ais-pre-t3zydiqi6qmoghgbmbm5vs-605585368137.us-west2.run.app](https://ais-pre-t3zydiqi6qmoghgbmbm5vs-605585368137.us-west2.run.app)*
 
-This project is structured as a robust, single-page application (SPA) backed by an Express synchronization server. It serves as a showcase of modern web engineering, demonstrating precise TypeScript typings, responsive layouts, modular state management, and real-time Server-Sent Events (SSE).
+BUDJET is a full-stack personal finance application powered by an automated data pipeline. Beyond standard expense tracking, it actively processes financial records and simulates historical volatility to generate a 90-day cashflow and Treasury-style trend forecast. 
 
----
-
-## 🚀 Key Architectural Features
-
-### 1. Collaborative Sync Engine (Server-Sent Events)
-* **Real-Time Rooms:** Users can spin up collaborative sessions or join live rooms with a room code.
-* **Server-Sent Events (SSE):** Rather than standard HTTP polling, BUDJET establishes persistent connection pipelines (`EventSource`) to push structural balance updates and synchronized transactions to multiple active clients instantly.
-* **Active Presence:** Backed by atomic ID tracking, live active participant avatars are dynamically pulled using the Dicebear avatar API.
-
-### 2. Context-Aware Advisor Intelligence
-* **Heuristical Rule Processing:** The dashboard features an active **Advisor Tip Engine** that evaluates total portfolio distributions, liquidity health, and relative cashflows in real-time.
-* **Proactive Interventions:** Dynamically alerts users when individual budget pools are depleted (under \$100), when outgoing expenses outpace incoming profits, or when wealth diversification is unbalanced.
-
-### 3. Professional Financial Modeling & Assets
-* **Projection Insights:** Features interactive mathematical asset-block models projecting compound savings velocity and 12-month treasury targets.
-* **Dynamic Sparklines:** Handeled directly via SVG math rendering, rendering real-time cashflow sparkline trends representing relative volatility across active streams.
-* **Due Today Panel:** An active bill/income scheduler where users can set obligations, track statuses, and clear items to instantly update cash reserves.
-
-### 4. Enterprise Offline Stability
-* **Queue-Based Offline Persistence:** Built with transaction queue backups on `localStorage`. If the network fails, user actions are buffered and queued locally, automatically syncing back to the cloud room once connectivity is recovered.
-* **Financial Layouts:** Designed using OpenType tabular-lining properties to force proportional monospacing on numerical lists, guaranteeing perfect column alignment on transaction grids.
-
-### 5. High-Fidelity Custom Theme
-* **Rose & Slate Accents:** Configured with a premium, slate-dark and vibrant rose color palette, utilizing rich negative spaces, precise borders, and elegant interactive elements.
+This project bridges the gap between everyday financial management and quantitative risk analytics, utilizing a simplified, user-friendly language designed to be clear and accessible to everyone.
 
 ---
 
-## 🛠️ The Tech Stack
+## 🏗️ Architecture & Data Pipeline (ETL)
 
-### Frontend Architecture
-* **React 18 & TypeScript:** Strict types representing transaction types (`expense` | `profit`), category structures, and state mutations.
-* **Vite:** High-performance, lightning-fast bundler.
-* **Tailwind CSS:** Modern responsive design with custom fluid grid properties.
-* **Lucide React:** Premium lightweight unified iconography.
+This application is built on a resilient data engineering foundation, designed to handle extraction, transformation, and automated loading/syncing.
 
-### Backend Infrastructure
-* **Node.js & Express:** Lightweight, zero-dependency REST and streaming server.
-* **Server-Sent Events (SSE):** Standard multi-event text stream transmission.
-* **esbuild:** Bundles the TypeScript server into a self-contained, high-performance CommonJS deployment bundle (`dist/server.cjs`).
+*   **Extract:** Retrieves public financial base parameters and syncs with existing live balances and ongoing recurring costs automatically.
+*   **Transform:** Processes and cleans raw JSON payloads, standardizing dates, calculating category spending envelopes, and processing transactional data for clean analysis.
+*   **Load & Automate:** Integrates with persistent storage queues to reliably store and sync record history, with automated triggers ensuring synchronization and reactive recalculation.
 
 ---
 
-## 📁 Source Code Directory Setup
+## 📊 Predictive Forecasting: 90-Day Treasury Yield & Cashflow Forecast
+
+A core feature of BUDJET is our forward-looking financial forecasting tool:
+
+*   **90-Day Money Forecast:** Rather than relying purely on historical lookbacks, the application is driven by a predictive mockup model that uses historical spending patterns to simulate potential cashflow trends over the next 90 days. This provides users with a clear visual representation of best-case and worst-case scenarios ("confidence bands") to avoid running out of cash.
+*   **What-If Money Calculator:** Allows interactive sandbox testing where users can simulate the long-term impact of future financial events (e.g., adding expenses, salary boosts, or changing frequencies) without altering live transactional logs.
+
+---
+
+## 💻 Tech Stack
+
+*   **Frontend:** React 18, TypeScript, Tailwind CSS, Lucide React (unified iconography), SVG Math Sparklines
+*   **Backend & Pipeline:** Node.js, Express
+*   **Real-Time Sync:** Server-Sent Events (SSE) for instant multiplayer room updates
+*   **Deployment:** Google Cloud Run (GCP)
+*   **Data & Persistence:** Structured Local-First Persistence with queue-based fallback syncing
+
+---
+
+## 🎯 Business Impact & Use Case
+
+I developed BUDJET to demonstrate end-to-end full-stack capabilities. Deploying a live application on Google Cloud Run that continuously ingests, cleans, and simulates real-world financial data in real time demonstrates a complete understanding of product lifecycle, cloud infrastructure, offline-first design, and interactive analytic visualization.
+
+---
+
+## 📁 Directory Setup
 
 ```bash
 ├── server.ts              # Express Real-Time SSE Server (CJS Built)
@@ -58,56 +56,37 @@ This project is structured as a robust, single-page application (SPA) backed by 
 │   ├── index.css          # Tailwind Rules & Typography Variables
 │   └── components/        # Isolated Modular Presentation Views
 │       ├── Sidebar.tsx            # Navigation rail & brand banner
-│       ├── ActiveBudgets.tsx      # SVG Sparklines & target monitors
-│       ├── Calculator.tsx         # Asset Block visualizer & cashflow registers
-│       ├── DueToday.tsx           # Bill tracker & scheduler interface
-│       ├── ProjectionInsights.tsx # Visual growth trajectory charts
-│       ├── RecentActivity.tsx     # Filterable spreadsheet with CSV export
+│       ├── ActiveBudgets.tsx      # SVG Sparklines & target monitors (Savings Pool, Safety Fund)
+│       ├── Calculator.tsx         # What-If Money Calculator & cashflow registers
+│       ├── DueToday.tsx           # Bills & Income Checklist
+│       ├── SmartProjections.tsx   # My 90-Day Money Forecast (Sureness Levels & Confidence Paths)
+│       ├── ProjectionInsights.tsx # Visual 12-month money goal target progress
+│       ├── RecentActivity.tsx     # Filterable spreadsheet of recent transactions (My Money Journal)
 │       ├── CollaborationHub.tsx   # Real-time room generator & synchronization controls
 │       └── Toast.tsx              # Reactive notifications manager
 ```
 
 ---
 
-## ⚙️ Local Development Setup
+## 🚀 Local Setup & Installation
 
-To run this project on your physical machine or integrate it into external deployment targets, follow these steps:
+To run this project locally:
 
-### Prerequisites
-Ensure you have **Node.js** (v18 or higher) and **npm** installed.
-
-### 1. Installation
-Clone your repository and install the production/development dependencies:
-```bash
-npm install
-```
-
-### 2. Fast Development Server
-Spins up both the frontend hot-reloader and the Express backend on port `3000`:
-```bash
-npm run dev
-```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
-
-### 3. Production Compilation
-Builds the client SPA and bundles the backend service into `dist/`:
-```bash
-npm run build
-```
-
-### 4. Run Production Build locally
-Serves the fully optimized static assets and API routes ready for containers:
-```bash
-npm start
-```
-
----
-
-## 💼 Recruiter Reference (Why this shows senior ability)
-
-If you are a Recruiter reviewing this codebase, here are several key engineering details to pay attention to in the code:
-
-1. **Modular React Layouts:** Check how state flows down from `App.tsx` into decoupled, highly cohesive subcomponents. This separation of concerns prevents massive file sizes and ensures optimal rendering performance.
-2. **Event-Driven Backend Systems:** Rather than resorting to expensive WebSocket server infrastructures, `server.ts` utilizes highly lightweight, standard Server-Sent Events (SSE) keeping room sync operational on single servers.
-3. **TypeScript Type Safety:** Look at `/src/types.ts`. All structural states (budgets, transactions, bills) are strictly guarded. You won't find generic `any` objects in this workspace. Every data payload is explicitly typed.
-4. **Resilient UX Design:** The application features robust failure fallback logic, offline queues, user friendliness, instant reactive CSV reports generation, and monospaced financial tables.
+1. Clone or download your repository: `git clone https://github.com/YourUsername/budjet.git`
+2. Navigate to the directory: `cd budjet`
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the development server (frontend hot-reloader + Express backend):
+   ```bash
+   npm run dev
+   ```
+5. Build for production (bundles backend using `esbuild` and frontend using `vite`):
+   ```bash
+   npm run build
+   ```
+6. Run the production build locally:
+   ```bash
+   npm start
+   ```
