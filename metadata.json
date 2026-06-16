@@ -1,5 +1,5 @@
 {
-  "name": "Cash Diet",
+  "name": "Budjet to Cash Diet",
   "description": "Your Wallet's Diet: An automated, collaborative cash diet tracker with 90-day cashflow models, what-if simulators, and real-time multiplayer sync on Cloud Run.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
