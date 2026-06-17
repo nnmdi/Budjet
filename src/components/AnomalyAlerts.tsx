@@ -164,7 +164,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
   if (activeAnomalies.length === 0) {
     if (loading) {
       return (
-        <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-center text-xs text-slate-400 gap-2">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-center text-xs text-slate-400 gap-2">
           <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
           <span>Looking for weird spending spikes...</span>
         </div>
@@ -172,16 +172,16 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
     }
     // Return a neat, quiet diagnostic status showing health state
     return (
-      <div id="anomaly-healthy-banner" className="bg-slate-50 border border-slate-150 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm text-xs text-slate-600">
-        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 shrink-0">
+      <div id="anomaly-healthy-banner" className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm text-xs text-slate-300">
+        <div className="p-2 bg-emerald-950/40 text-emerald-400 rounded-xl border border-emerald-900/30 shrink-0">
           <Check className="w-4.5 h-4.5 font-bold" />
         </div>
         <div className="space-y-0.5">
-          <p className="font-bold text-slate-800 flex items-center gap-1.5 leading-tight">
+          <p className="font-bold text-white flex items-center gap-1.5 leading-tight">
             <span>Everything Looks Great</span>
-            <span className="font-mono bg-emerald-100/75 text-emerald-700 px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider">HEALTHY</span>
+            <span className="font-mono bg-emerald-950/40 border border-emerald-900/30 text-emerald-400 px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider">HEALTHY</span>
           </p>
-          <p className="text-[11px] text-slate-500 leading-normal font-sans">
+          <p className="text-[11px] text-slate-400 leading-normal font-sans">
             No unexpected spending spikes found in your budget categories. Everything looks normal!
           </p>
         </div>
@@ -200,47 +200,47 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
   return (
     <div 
       id="anomaly-alerts-container" 
-      className={`border rounded-2xl transition-all duration-300 shadow-sm overflow-hidden bg-white ${
+      className={`border rounded-2xl transition-all duration-300 shadow-sm overflow-hidden bg-slate-900 ${
         criticalCount > 0 
-          ? "border-amber-200 shadow-amber-50/20" 
-          : "border-slate-200"
+          ? "border-amber-500/20 shadow-amber-950/10" 
+          : "border-slate-800"
       }`}
     >
       {/* Banner Header */}
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
         className={`p-4 flex items-center justify-between gap-4 cursor-pointer select-none transition-colors ${
-          criticalCount > 0 ? "bg-amber-50/50 hover:bg-amber-50" : "bg-slate-50/50 hover:bg-slate-50"
+          criticalCount > 0 ? "bg-amber-950/20 hover:bg-amber-950/30" : "bg-slate-950/40 hover:bg-slate-950/60"
         }`}
       >
         <div className="flex items-start gap-3.5">
           <div className={`p-2.5 rounded-xl border shrink-0 mt-0.5 ${
             criticalCount > 0 
-              ? "bg-amber-100 text-amber-700 border-amber-200" 
-              : "bg-slate-100 text-slate-600 border-slate-200"
+              ? "bg-amber-950/60 text-amber-400 border-amber-900/40" 
+              : "bg-slate-950 text-slate-400 border-slate-800"
           }`}>
             <AlertTriangle className={`w-5 h-5 ${criticalCount > 0 ? "animate-bounce" : ""}`} />
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center flex-wrap gap-2">
-              <h4 className="text-sm font-black tracking-tight text-slate-800">
+              <h4 className="text-sm font-black tracking-tight text-white animate-pulse">
                 Unexpected Spending Alerts
               </h4>
               <div className="flex items-center gap-1 font-mono text-[9px] font-bold">
                 {criticalCount > 0 && (
-                  <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full border border-red-200 leading-none">
+                  <span className="bg-red-950/40 text-red-400 px-2 py-0.5 rounded-full border border-red-900/30 leading-none">
                     {criticalCount} Huge Spike{criticalCount > 1 ? "s" : ""}
                   </span>
                 )}
                 {warningCount > 0 && (
-                  <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200 leading-none">
+                  <span className="bg-amber-950/40 text-amber-400 px-2 py-0.5 rounded-full border border-amber-900/30 leading-none">
                     {warningCount} Minor Spike{warningCount > 1 ? "s" : ""}
                   </span>
                 )}
               </div>
             </div>
-            <p className="text-[11.5px] text-slate-500 font-sans leading-normal">
+            <p className="text-[11.5px] text-slate-400 font-sans leading-normal">
               {criticalCount > 0 
                 ? `Alert: You spent way more than usual in some budget boxes.`
                 : `Some minor spending spikes found. Click to see what they are.`
@@ -251,7 +251,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
 
         <button 
           type="button"
-          className="p-1.5 hover:bg-slate-200/60 rounded-lg text-slate-500 transition-colors"
+          className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors cursor-pointer"
         >
           {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
         </button>
@@ -259,18 +259,18 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
 
       {/* Expanded Outlier Report Listing */}
       {isExpanded && (
-        <div className="p-4 border-t border-slate-100 bg-white space-y-4 animate-fadeIn">
-          <div className="flex items-start gap-2.5 p-3 bg-[#eff4ff]/60 border border-[#dce9ff] rounded-xl text-[10.5px] text-slate-600 shadow-inner">
-            <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+        <div className="p-4 border-t border-slate-800 bg-slate-900 space-y-4 animate-fadeIn">
+          <div className="flex items-start gap-2.5 p-3 bg-indigo-950/20 border border-indigo-900/30 rounded-xl text-[10.5px] text-slate-300 shadow-inner">
+            <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
             <div className="space-y-0.5 leading-relaxed font-sans">
-              <p className="font-bold text-slate-800 font-sans">How does this work?</p>
-              <p className="font-sans text-[11px]">
+              <p className="font-bold text-white font-sans">How does this work?</p>
+              <p className="font-sans text-[11px] text-slate-400">
                 We look at how much you usually spend in each budget box. If you spend a bunch more than usual, we flag it so you can make sure it was on purpose.
               </p>
             </div>
           </div>
 
-          <div className="divide-y divide-slate-100 max-h-[350px] overflow-y-auto pr-1">
+          <div className="divide-y divide-slate-800/60 max-h-[350px] overflow-y-auto pr-1">
             {activeAnomalies.map((anomaly) => {
               const dateObj = new Date(anomaly.transaction.date);
               const formattedDate = !isNaN(dateObj.getTime()) 
@@ -283,33 +283,33 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
                     <div className="flex items-center gap-2">
                       <span className={`text-[8.5px] px-2 py-0.5 rounded font-black font-mono leading-none tracking-wider ${
                         anomaly.severity === "critical"
-                          ? "bg-rose-50 text-rose-700 border border-rose-100"
-                          : "bg-amber-50 text-amber-800 border border-amber-100"
+                          ? "bg-rose-950/40 text-rose-400 border border-rose-900/30"
+                          : "bg-amber-950/40 text-amber-400 border border-amber-900/30"
                       }`}>
                         {anomaly.severity === "critical" ? "HUGE SPIKE" : "MINOR SPIKE"}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">{formattedDate}</span>
-                      <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-1.5 bg-slate-100 rounded text-[9px]">{anomaly.budget}</span>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest px-1.5 bg-slate-950 rounded text-[9px]">{anomaly.budget}</span>
                     </div>
 
-                    <p className="text-xs text-slate-700 font-sans font-medium leading-relaxed">
+                    <p className="text-xs text-slate-300 font-sans font-medium leading-relaxed">
                       {anomaly.message}
                     </p>
 
                     {/* Standard Deviation Gauge Slider */}
                     <div className="space-y-1">
-                      <div className="flex justify-between items-center text-[8.5px] font-mono text-slate-400">
+                      <div className="flex justify-between items-center text-[8.5px] font-mono text-slate-450">
                         <span>Average: ${anomaly.mean.toFixed(0)}</span>
-                        <span className={anomaly.severity === "critical" ? "text-rose-600 font-bold" : "text-amber-700 font-bold"}>
+                        <span className={anomaly.severity === "critical" ? "text-rose-450 font-bold" : "text-amber-450 font-bold"}>
                           {anomaly.amount > anomaly.mean ? `Over average by $${(anomaly.amount - anomaly.mean).toFixed(0)}` : "Spike"}
                         </span>
                       </div>
                       
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden relative">
+                      <div className="h-1.5 bg-slate-950 rounded-full overflow-hidden relative border border-slate-850">
                         {/* Background ticks */}
-                        <div className="absolute left-[30%] top-0 bottom-0 w-0.5 bg-slate-200" title="Minor variance"></div>
-                        <div className="absolute left-[50%] top-0 bottom-0 w-0.5 bg-slate-200" title="Moderate deviation"></div>
-                        <div className="absolute left-[75%] top-0 bottom-0 w-0.5 bg-slate-300" title="Significant spike"></div>
+                        <div className="absolute left-[30%] top-0 bottom-0 w-0.5 bg-slate-800" title="Minor variance"></div>
+                        <div className="absolute left-[50%] top-0 bottom-0 w-0.5 bg-slate-800" title="Moderate deviation"></div>
+                        <div className="absolute left-[75%] top-0 bottom-0 w-0.5 bg-slate-800" title="Significant spike"></div>
 
                         {/* Fill line */}
                         <div 
@@ -324,13 +324,13 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
 
                   <div className="flex items-center gap-2">
                     <div className="text-right whitespace-nowrap">
-                      <p className="text-xs font-black text-slate-900 font-mono">${anomaly.amount.toFixed(2)}</p>
+                      <p className="text-xs font-black text-white font-mono">${anomaly.amount.toFixed(2)}</p>
                       <p className="text-[9px] text-slate-400">Amount</p>
                     </div>
 
                     <button
                       onClick={(e) => handleDismiss(anomaly.id, e)}
-                      className="py-1 px-2.5 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-[10px] font-bold rounded text-slate-500 cursor-pointer transition-colors"
+                      className="py-1 px-2.5 border border-slate-800 hover:border-slate-755 hover:bg-slate-850 text-[10px] font-bold rounded text-slate-300 cursor-pointer transition-colors"
                       title="Hide this alert"
                     >
                       Got It

@@ -44,7 +44,7 @@ export default function Sidebar({
 }: SidebarProps) {
   
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "dashboard", label: "Home", icon: LayoutDashboard },
     { id: "budgets", label: "Budgets", icon: Wallet },
     { id: "transactions", label: "Transactions", icon: History },
     { id: "projections", label: "Money Forecast", icon: TrendingUp },

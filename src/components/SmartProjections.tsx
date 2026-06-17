@@ -343,7 +343,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
   }, [forecast, metrics, totalLiquidity]);
 
   return (
-    <div id="smart-projections-desk" className="space-y-6 max-w-7xl mx-auto font-sans text-slate-800">
+    <div id="smart-projections-desk" className="space-y-6 max-w-7xl mx-auto font-sans text-slate-200">
       
       {/* Top Banner introducing statistics */}
       <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl p-6 relative overflow-hidden shadow-lg">
@@ -380,7 +380,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             <span className="text-[10px] font-bold uppercase tracking-wider">Current Balance</span>
             <Wallet className="w-4 h-4 text-slate-400" />
           </div>
-          <h3 className="text-xl font-bold font-mono text-[#0b1c30]">
+          <h3 className="text-xl font-bold font-mono text-white">
             {formatCurrency(totalLiquidity)}
           </h3>
           <p className="text-[10.5px] text-slate-400 font-medium font-sans">Combined balance across active accounts</p>
@@ -390,11 +390,11 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
         <div className="p-5 bg-white border border-[#eff4ff] rounded-xl shadow-xs space-y-1">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Future Guess</span>
-            <span className={`p-1 rounded text-[9px] font-black uppercase ${projectionStatus.growth ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+            <span className={`p-1 rounded text-[9px] font-black uppercase ${projectionStatus.growth ? 'bg-emerald-950/40 text-emerald-400' : 'bg-rose-950/40 text-rose-400'}`}>
               {projectionStatus.percentageStr}
             </span>
           </div>
-          <h3 className="text-xl font-bold font-mono text-[#0b1c30]">
+          <h3 className="text-xl font-bold font-mono text-white">
             {formatCurrency(forecast[forecast.length - 1]?.balance || 0)}
           </h3>
           <p className="text-[10.5px] text-slate-400 font-medium font-sans">
@@ -412,7 +412,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
               <TrendingDown className="w-4 h-4 text-rose-500" />
             )}
           </div>
-          <h3 className={`text-xl font-bold font-mono ${metrics.monthlySlope >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+          <h3 className={`text-xl font-bold font-mono ${metrics.monthlySlope >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
             {metrics.monthlySlope >= 0 ? "+" : ""}{formatCurrency(metrics.monthlySlope)}
           </h3>
           <p className="text-[10.5px] text-slate-400 font-medium font-sans">Guessed monthly speed of savings</p>
@@ -424,7 +424,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             <span className="text-[10px] font-bold uppercase tracking-wider font-sans">Safe Level</span>
             <ShieldCheck className="w-4 h-4 text-indigo-500" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 font-mono">
+          <h3 className="text-xl font-bold text-white font-mono">
             {projectionStatus.volatilityState === "Elevated Volatility" ? "Moderate Fluctuation" : "Highly Stable"}
           </h3>
           <p className="text-[10.5px] text-slate-400 font-medium font-sans">Safety wiggle room: {formatCurrency(metrics.standardError)}</p>
@@ -436,18 +436,18 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
         
         {/* Interactive parameter control sidebar */}
-        <div className="bg-white border border-[#eff4ff] rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-5">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-5">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <Sliders className="w-4.5 h-4.5 text-[#0058be]" />
-              <h4 className="font-bold text-xs text-slate-900 uppercase tracking-widest font-sans">Change Settings</h4>
+            <div className="flex items-center gap-2 border-b border-slate-750 pb-3">
+              <Sliders className="w-4.5 h-4.5 text-[#60a5fa]" />
+              <h4 className="font-bold text-xs text-white uppercase tracking-widest font-sans">Change Settings</h4>
             </div>
 
             {/* Slider 1: Horizon */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[10.5px]">
-                <label className="font-bold text-slate-500 uppercase tracking-wider font-sans">How Far Ahead</label>
-                <span className="font-bold font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-700">{forecastHorizon} Days</span>
+                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">How Far Ahead</label>
+                <span className="font-bold font-mono bg-slate-950 px-2 py-0.5 rounded text-white">{forecastHorizon} Days</span>
               </div>
               <input 
                 type="range" 
@@ -456,9 +456,9 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
                 step={30}
                 value={forecastHorizon}
                 onChange={(e) => setForecastHorizon(Number(e.target.value))}
-                className="w-full accent-rose-700 cursor-pointer h-1.5 bg-slate-100 rounded-lg appearance-none" 
+                className="w-full accent-rose-700 cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none" 
               />
-              <div className="flex justify-between text-[8.5px] text-slate-400 font-bold font-mono">
+              <div className="flex justify-between text-[8.5px] text-slate-450 font-bold font-mono">
                 <span>30D</span>
                 <span>60D</span>
                 <span>90D</span>
@@ -469,8 +469,8 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             {/* Slider 2: Confidence Interval */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[10.5px]">
-                <label className="font-bold text-slate-500 uppercase tracking-wider font-sans">Sureness Level</label>
-                <span className="font-bold font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-700">{(confidenceLevel * 100).toFixed(0)}%</span>
+                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">Sureness Level</label>
+                <span className="font-bold font-mono bg-slate-950 px-2 py-0.5 rounded text-white">{(confidenceLevel * 100).toFixed(0)}%</span>
               </div>
               <div className="grid grid-cols-3 gap-1.5">
                 {[0.80, 0.90, 0.95].map((val) => (
@@ -480,8 +480,8 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
                     onClick={() => setConfidenceLevel(val)}
                     className={`py-1.5 text-[10px] font-bold rounded cursor-pointer transition-all border font-sans ${
                       confidenceLevel === val 
-                        ? "bg-slate-900 border-slate-900 text-white" 
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        ? "bg-rose-700 border-rose-700 text-white" 
+                        : "bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800/50"
                     }`}
                   >
                     {val * 100}%
@@ -494,13 +494,13 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             {/* Slider 3: Stress Testing Simulation */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[10.5px]">
-                <label className="font-bold text-slate-500 uppercase tracking-wider font-sans">Add Mock Extra Money</label>
+                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">Add Mock Extra Money</label>
                 <span className={`font-bold font-mono px-2 py-0.5 rounded ${
                   simulationStress > 0 
-                    ? "bg-emerald-50 text-emerald-700" 
+                    ? "bg-emerald-950/40 text-emerald-400" 
                     : simulationStress < 0 
-                      ? "bg-rose-50 text-rose-700" 
-                      : "bg-slate-100 text-slate-700"
+                      ? "bg-rose-950/40 text-rose-450" 
+                      : "bg-slate-950 text-white"
                 }`}>
                   {simulationStress > 0 ? "+" : ""}{formatCurrency(simulationStress)}/mo
                 </span>
@@ -512,9 +512,9 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
                 step={250}
                 value={simulationStress}
                 onChange={(e) => setSimulationStress(Number(e.target.value))}
-                className="w-full accent-[#0058be] cursor-pointer h-1.5 bg-slate-100 rounded-lg appearance-none" 
+                className="w-full accent-[#60a5fa] cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none" 
               />
-              <div className="flex justify-between text-[8px] text-slate-400 font-bold font-mono">
+              <div className="flex justify-between text-[8px] text-slate-450 font-bold font-mono">
                 <span>-$3K/mo</span>
                 <span>Neutral</span>
                 <span>+$3K/mo</span>
@@ -523,9 +523,9 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
             {/* Checkbox: Include Due Bills */}
             {dueBills.length > 0 && (
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 text-[10.5px]">
+              <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-850 text-[10.5px]">
                 <div>
-                  <p className="font-bold text-slate-700 font-sans">Include unpaid bills</p>
+                  <p className="font-bold text-white font-sans">Include unpaid bills</p>
                   <p className="text-[9px] text-slate-400 font-sans">
                     {(() => {
                       const expCount = dueBills.filter(b => b.type === "expense").length;
@@ -550,22 +550,22 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
           </div>
 
           {/* Quick Informational Notice inside settings shelf */}
-          <div className="bg-slate-50 border border-slate-150 p-3.5 rounded-xl text-[10px] text-slate-500 font-sans leading-relaxed flex gap-2.5 items-start">
+          <div className="bg-slate-950 border border-slate-850 p-3.5 rounded-xl text-[10px] text-slate-400 font-sans leading-relaxed flex gap-2.5 items-start">
             <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             <div className="space-y-1 font-sans">
-              <p className="font-bold text-slate-700 leading-tight font-sans">How are these guessed?</p>
+              <p className="font-bold text-white leading-tight font-sans">How are these guessed?</p>
               <p className="font-sans text-[9.5px]">The colored path shows the best-case and worst-case scenarios for your cash based on past spending ups and downs. The further out we forecast, the wider the path gets because the future is harder to predict perfectly!</p>
             </div>
           </div>
         </div>
 
         {/* Dynamic Interactive SVG Chart Section */}
-        <div className="bg-white border border-[#eff4ff] rounded-2xl p-5 shadow-sm lg:col-span-3 flex flex-col justify-between relative overflow-hidden">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm lg:col-span-3 flex flex-col justify-between relative overflow-hidden">
           
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
+          <div className="flex items-center justify-between border-b border-slate-150 pb-3 mb-2">
             <div>
-              <h4 className="font-bold text-xs text-slate-900 uppercase tracking-widest flex items-center gap-1.5 font-sans">
-                <Clock className="w-3.5 h-3.5 text-[#0058be]" /> Our Guessing Map
+              <h4 className="font-bold text-xs text-white uppercase tracking-widest flex items-center gap-1.5 font-sans">
+                <Clock className="w-3.5 h-3.5 text-[#60a5fa]" /> Our Guessing Map
               </h4>
               <p className="text-[10px] text-slate-400 font-sans">Move your cursor over the dots/lines to see predicted balances</p>
             </div>
@@ -573,15 +573,15 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             {/* Legends */}
             <div className="flex items-center gap-4 text-[9px] font-bold text-slate-500 uppercase tracking-wider font-sans">
               <div className="flex items-center gap-1.5 font-sans">
-                <span className="w-3 h-0.5 bg-[#0b1c30] rounded-full inline-block" />
+                <span className="w-3 h-0.5 bg-slate-300 rounded-full inline-block" />
                 <span>Actual Past</span>
               </div>
               <div className="flex items-center gap-1.5 font-sans">
-                <span className="w-3 h-0.5 border-t-2 border-dashed border-rose-700 inline-block" />
+                <span className="w-3.5 h-0.5 border-t-2 border-dashed border-rose-400 inline-block" />
                 <span>Future Guess</span>
               </div>
               <div className="flex items-center gap-1.5 font-sans">
-                <span className="w-3.5 h-2.5 bg-rose-700/10 rounded inline-block" />
+                <span className="w-3.5 h-2.5 bg-rose-500/20 rounded inline-block" />
                 <span>Worst to Best Case</span>
               </div>
             </div>
@@ -657,7 +657,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
               {historicalDPath && (
                 <path 
                   d={historicalDPath}
-                  stroke="#0f172a"
+                  stroke="var(--slate-705)"
                   strokeWidth={2.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -705,7 +705,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
                       cx={pt.x} 
                       cy={pt.y} 
                       r={isHovered ? 6 : 1.5}
-                      fill={pt.isProjected ? "#dc2626" : "#0f172a"}
+                      fill={pt.isProjected ? "#dc2626" : "var(--slate-705)"}
                       className="cursor-pointer transition-all duration-100"
                       onMouseEnter={(e) => {
                         setActiveTooltip({
@@ -797,10 +797,10 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
               )}
             </div>
             <div className="space-y-1">
-              <p className="font-bold text-slate-900">
+              <p className="font-bold text-white">
                 {projectionStatus.growth ? "Optimal Structural Trajectory" : "Decline Threshold Warning"}
               </p>
-              <p className="text-slate-500 font-sans leading-relaxed text-[11px]">
+              <p className="text-slate-400 font-sans leading-relaxed text-[11px]">
                 {projectionStatus.verdict} {metrics.dueBillsDeducted > 0 && `Upcoming due liabilities of ${formatCurrency(metrics.dueBillsDeducted)} have been subtracted.`} {metrics.dueBillsAdded > 0 && `Upcoming paycheck/income of ${formatCurrency(metrics.dueBillsAdded)} has been added to improve future forecasting.`}
               </p>
             </div>

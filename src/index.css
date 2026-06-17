@@ -63,26 +63,16 @@
   --white-theme: #ffffff;
 }
 
-.light-theme {
-  /* Elegant Light Theme settings */
-  --slate-950: #f4f6fc; /* Main page background */
-  --slate-900: #ffffff; /* Bento item backgrounds */
-  --slate-850: #eef2f6; /* Sub-container backgrounds */
-  --slate-800: #cbd5e1; /* Borders */
-  --slate-705: #0f172a; /* High contrast text / main text color */
-  --slate-700: #1e293b; /* Secondary text color */
-  --slate-600: #334155;
-  --slate-500: #475569;
-  --slate-450: #64748b;
-  --slate-400: #5e7087; /* Soft text color */
-  --slate-300: #cbd5e1;
-  --slate-200: #e2e8f0;
-  --slate-150: #f1f5f9;
-  --slate-100: #f8fafc;
-  --slate-50: #ffffff;
-
-  --white-theme: #0f172a; /* All standard white text switches to deep slate */
+/* Specific Focus-Mode Spacing overrides to create separation between elements */
+div#root:nth-of-type(1) > div#application-container:nth-of-type(1) > main#app-main:nth-of-type(1) > header#tab-nav-header:nth-of-type(1) > div#header-actions:nth-of-type(2) > div:nth-of-type(1) {
+  margin-left: 1.5rem !important; /* Prominent extra breathing negative space from the left title column */
 }
+
+div#root:nth-of-type(1) > div#application-container:nth-of-type(1) > main#app-main:nth-of-type(1) > header#tab-nav-header:nth-of-type(1) > div:nth-of-type(1) > h2#view-title:nth-of-type(1) {
+  margin-right: 1.5rem !important; /* Ensures the view title keeps high contrast, clear spacing, and never clumps together */
+}
+
+/* Modals overlays backgrounds */
 
 /* Custom global rules for premium precision fintech layout styling */
 body {
@@ -165,10 +155,3 @@ body {
   background-color: var(--color-slate-850) !important;
 }
 
-/* Modal overlays background and light modes */
-.light-theme .fixed.inset-0.bg-\[\#0f172a\]\/40 {
-  background-color: rgba(15, 23, 42, 0.4) !important;
-}
-.light-theme .fixed.inset-0.bg-slate-950\/40 {
-  background-color: rgba(15, 23, 42, 0.4) !important;
-}

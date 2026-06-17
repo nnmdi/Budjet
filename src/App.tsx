@@ -20,9 +20,7 @@ import {
   ArrowUpRight,
   Sparkles,
   Tag,
-  Info,
-  Sun,
-  Moon
+  Info
 } from "lucide-react";
 import { transactionClassifier } from "./utils/transactionClassifier";
 import { 
@@ -66,11 +64,6 @@ export default function App() {
   });
   const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
     return sessionStorage.getItem("budgetmanager_is_guest") === "true";
-  });
-
-  // --- Dark Mode State ---
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem("theme") !== "light";
   });
 
   // --- Primary App States ---
@@ -1220,7 +1213,7 @@ export default function App() {
 
   // Render proper sub views
   return (
-    <div id="application-container" className={`min-h-screen ${isDarkMode ? "dark-theme" : "light-theme"} bg-slate-950 text-slate-705 pl-64 font-sans antialiased`}>
+    <div id="application-container" className="min-h-screen dark-theme bg-slate-950 text-slate-705 pl-64 font-sans antialiased">
       
       {/* Sidebar navigation */}
       <Sidebar
@@ -1244,20 +1237,20 @@ export default function App() {
       />
 
       {/* Main Screen Container content area */}
-      <main id="app-main" className="pt-6 pb-20 px-8">
+      <main id="app-main" className="pt-6 pb-20 pl-4 pr-8 sm:pl-5">
 
         {/* Guest Warning Banner */}
         {!userEmail && isGuestMode && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-800 animate-fadeIn">
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-200 animate-fadeIn">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-amber-100 rounded-xl text-amber-600 shrink-0">
+              <div className="p-2 bg-amber-500/15 rounded-xl text-amber-400 shrink-0">
                 <AlertCircle className="w-5 h-5 animate-pulse" />
               </div>
               <div>
-                <p className="font-extrabold text-[13px] text-slate-900 leading-tight">
+                <p className="font-extrabold text-[13px] text-amber-100 leading-tight">
                   Guest Workspace / Transient Session
                 </p>
-                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                <p className="text-[11px] text-amber-400/85 mt-1 leading-relaxed">
                   Your transactions and budgets are NOT being saved. Create an account or log in to persist your personal ledger across sessions.
                 </p>
               </div>
@@ -1275,7 +1268,7 @@ export default function App() {
         )}
         
         {/* Dynamic Nav Header Bar */}
-        <header id="tab-nav-header" className="flex items-center justify-between mb-8 border-b border-slate-800/80 pb-5">
+        <header id="tab-nav-header" className="flex items-center justify-between gap-x-12 flex-wrap sm:flex-nowrap mb-8 border-b border-slate-800/80 pb-5">
           <div className="flex items-center gap-4">
             {activeBudgetFilter ? (
               <button
@@ -1287,7 +1280,7 @@ export default function App() {
               </button>
             ) : null}
             <h2 id="view-title" className="text-2xl font-black tracking-tight text-white capitalize">
-              {activeBudgetFilter ? `Budget / ${activeBudgetFilter}` : currentTab}
+              {activeBudgetFilter ? `Budget / ${activeBudgetFilter}` : (currentTab === "dashboard" ? "Home" : currentTab)}
             </h2>
           </div>
 
@@ -1317,20 +1310,6 @@ export default function App() {
                 <RotateCw className="w-4.5 h-4.5" />
               </button>
             </div>
-
-            {/* Light / Dark Theme Toggle Switch */}
-            <button
-              onClick={() => {
-                const newMode = !isDarkMode;
-                setIsDarkMode(newMode);
-                localStorage.setItem("theme", newMode ? "dark" : "light");
-                triggerToast(`Theme switched to ${newMode ? "Dark Mode" : "Light Mode"}`, "info");
-              }}
-              className="p-1.5 rounded border border-slate-800 bg-slate-900 text-rose-450 hover:bg-slate-850 hover:text-rose-300 transition-all cursor-pointer flex items-center justify-center h-8.5 w-8.5 shadow-sm"
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
 
             {/* General quick actions click list */}
             {!activeBudgetFilter && (
@@ -1390,9 +1369,9 @@ export default function App() {
             </div>
 
             <div className="space-y-4 text-xs font-sans">
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded">
+              <div className="flex items-center justify-between p-3.5 bg-slate-950 border border-slate-800 rounded">
                 <div>
-                  <p className="font-bold text-slate-700">Automatic Sync Retry</p>
+                  <p className="font-bold text-slate-200">Automatic Sync Retry</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Attempt network re-sync every 30 seconds when in background mode</p>
                 </div>
                 <input 
@@ -1403,9 +1382,9 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded">
+              <div className="flex items-center justify-between p-3.5 bg-slate-950 border border-[#1e293b] rounded">
                 <div>
-                  <p className="font-bold text-slate-700">OpenType Tabular Numbers (tnum)</p>
+                  <p className="font-bold text-slate-200">OpenType Tabular Numbers (tnum)</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Forces monospacing on numerical lists for perfect tabular alignment</p>
                 </div>
                 <input 
@@ -1416,9 +1395,9 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded">
+              <div className="flex items-center justify-between p-3.5 bg-slate-950 border border-[#1e293b] rounded">
                 <div>
-                  <p className="font-bold text-slate-700">Live Workspace Collaboration</p>
+                  <p className="font-bold text-slate-200">Live Workspace Collaboration</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Enable Server-Sent Events push notifications on active folders</p>
                 </div>
                 <input 
@@ -1430,10 +1409,10 @@ export default function App() {
               </div>
             </div>
 
-            <div className="border-t border-slate-100 pt-5 text-right">
+            <div className="border-t border-slate-800 pt-5 text-right">
               <button 
                 onClick={() => triggerToast("Preferences saved to local workspace Storage", "success")}
-                className="py-2 px-5 bg-[#0058be] text-white hover:bg-slate-800 text-xs font-bold rounded cursor-pointer transition-colors"
+                className="py-2 px-5 bg-rose-700 text-white hover:bg-rose-600 text-xs font-bold rounded cursor-pointer transition-colors"
                 title="Save preferences button"
               >
                 Save Preferences
@@ -1716,12 +1695,12 @@ export default function App() {
 
                   {/* Dynamic Naive Bayes Classifier Feedback panel */}
                   {txDescription.trim().length >= 2 && (
-                    <div id="ai-categorization-panel" className="bg-[#f8fafc]/90 border border-slate-150 rounded-lg p-3 space-y-2 text-[10px]">
-                      <div className="flex items-center justify-between text-slate-500 pb-1.5 border-b border-dashed border-slate-200">
-                        <span className="font-bold uppercase tracking-wider text-[8px] flex items-center gap-1 text-indigo-600">
-                          <Sparkles className="w-3 h-3 animate-pulse text-indigo-500" /> Automated Pipeline
+                    <div id="ai-categorization-panel" className="bg-slate-900/65 border border-slate-800/85 rounded-lg p-3 space-y-2 text-[10px]">
+                      <div className="flex items-center justify-between text-slate-400 pb-1.5 border-b border-dashed border-slate-800">
+                        <span className="font-bold uppercase tracking-wider text-[8px] flex items-center gap-1 text-indigo-400">
+                          <Sparkles className="w-3 h-3 animate-pulse text-indigo-400" /> Automated Pipeline
                         </span>
-                        <span className="font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold text-[8.5px]">
+                        <span className="font-mono bg-indigo-950/40 border border-indigo-900/30 text-indigo-300 px-1.5 py-0.5 rounded font-bold text-[8.5px]">
                           {Math.round(txClassification.confidence * 100)}% Probability
                         </span>
                       </div>
@@ -1729,8 +1708,8 @@ export default function App() {
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <p className="text-slate-400 text-[8.5px] uppercase tracking-wider">Classification</p>
-                          <p className="text-[11.5px] font-bold text-slate-900 flex items-center gap-1 mt-0.5">
-                            <Tag className="w-3 h-3 text-indigo-500" />
+                          <p className="text-[11.5px] font-bold text-slate-100 flex items-center gap-1 mt-0.5">
+                            <Tag className="w-3 h-3 text-indigo-400" />
                             <span>{txClassification.category}</span>
                           </p>
                         </div>
@@ -1745,7 +1724,7 @@ export default function App() {
                                   setActiveBudgetFilter(txClassification.category);
                                   triggerToast(`Switched workspace compartment to '${txClassification.category}'`, "info");
                                 }}
-                                className="py-1 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/50 rounded transition-all cursor-pointer text-[9px]"
+                                className="py-1 px-2.5 bg-indigo-950/50 hover:bg-indigo-900/50 text-indigo-300 font-bold border border-indigo-900/50 rounded transition-all cursor-pointer text-[9px]"
                               >
                                 Switch Category &rarr;
                               </button>
@@ -1763,7 +1742,7 @@ export default function App() {
                                   setActiveBudgetFilter(txClassification.category);
                                   triggerToast(`Auto-created category & switched workspace to '${txClassification.category}'`, "success");
                                 }}
-                                className="py-1 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-100 rounded transition-all cursor-pointer text-[9px]"
+                                className="py-1 px-2 bg-rose-950/40 hover:bg-rose-900/40 text-rose-450 font-bold border border-rose-900/40 rounded transition-all cursor-pointer text-[9px]"
                               >
                                 Create &amp; Switch &rarr;
                               </button>
@@ -1773,13 +1752,13 @@ export default function App() {
                       </div>
 
                       {/* Probabilities micro-distribution */}
-                      <div className="space-y-1 pt-1.5 border-t border-slate-100">
+                      <div className="space-y-1 pt-1.5 border-t border-slate-800">
                         <p className="text-[8px] text-slate-400 uppercase font-black tracking-wiest">Estimated Bayes Likelihood Space:</p>
-                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[8.5px] text-slate-500">
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[8.5px] text-slate-300">
                           {txClassification.allProbabilities.slice(0, 4).map((p, idx) => (
-                            <div key={idx} className="flex justify-between items-center bg-slate-50 py-0.5 px-1.5 rounded border border-slate-100">
+                            <div key={idx} className="flex justify-between items-center bg-slate-950 py-0.5 px-1.5 rounded border border-slate-850/60 font-sans">
                               <span className="truncate max-w-[65px] font-medium">{p.category}</span>
-                              <span className="text-indigo-600 font-bold">{(p.probability * 100).toFixed(0)}%</span>
+                              <span className="text-indigo-400 font-bold">{(p.probability * 100).toFixed(0)}%</span>
                             </div>
                           ))}
                         </div>
@@ -1789,7 +1768,7 @@ export default function App() {
 
                   <button
                     type="submit"
-                    className="w-full py-3 bg-black hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors text-center cursor-pointer mt-2 block shadow-sm"
+                    className="w-full py-3 bg-rose-700 hover:bg-rose-650 text-white text-xs font-bold uppercase tracking-wider rounded transition-colors text-center cursor-pointer mt-2 block shadow-sm"
                   >
                     Confirm Transaction
                   </button>
@@ -1909,98 +1888,6 @@ export default function App() {
 
             </div>
 
-            {/* Quick Create Budget Modal Overlay */}
-            {showQuickCreate && (
-              <div className="fixed inset-0 z-50 bg-[#0f172a]/40 backdrop-blur-xs flex items-center justify-center p-4">
-                <div className="bg-white max-w-sm w-full p-6 rounded-lg border border-slate-100 shadow-2xl space-y-4 font-sans text-xs">
-                  <h4 className="font-bold text-base text-slate-900 leading-snug">Create Structural Budget</h4>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500">Budget Name</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Savings Bucket" 
-                        value={newNameInput}
-                        onChange={(e) => setNewNameInput(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 rounded text-xs text-slate-950 font-bold"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500">Starting Balance ($)</label>
-                      <input 
-                        type="number" 
-                        placeholder="0.00" 
-                        value={newBalanceInput}
-                        onChange={(e) => setNewBalanceInput(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 rounded text-xs text-slate-950"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end gap-2.5 pt-2">
-                    <button 
-                      onClick={() => setShowQuickCreate(false)}
-                      className="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 rounded font-bold cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={handleCreateNewBudget}
-                      className="px-5 py-2 bg-slate-900 border border-slate-900 hover:bg-slate-800 hover:border-slate-800 text-white rounded font-bold cursor-pointer"
-                    >
-                      Confirm
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Rename Budget Modal Overlay */}
-            {showQuickRename && (
-              <div className="fixed inset-0 z-50 bg-[#0f172a]/40 backdrop-blur-xs flex items-center justify-center p-4">
-                <div className="bg-white max-w-sm w-full p-6 rounded-lg border border-slate-100 shadow-2xl space-y-4 font-sans text-xs">
-                  <h4 className="font-bold text-base text-slate-900 leading-snug">Rename Structural Budget</h4>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500">Select Budget</label>
-                      <select
-                        value={oldRenameSelect}
-                        onChange={(e) => setOldRenameSelect(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs"
-                      >
-                        {Object.keys(budgets).map((name) => (
-                          <option key={name} value={name}>{name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-500">New Target Name</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Swiss Alps Expedition" 
-                        value={newNameSelect}
-                        onChange={(e) => setNewNameSelect(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 rounded text-xs text-slate-950"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end gap-2.5 pt-2">
-                    <button 
-                      onClick={() => setShowQuickRename(false)}
-                      className="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 rounded font-bold cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={handleRenameBudget}
-                      className="px-5 py-2 bg-slate-900 border border-slate-900 hover:bg-slate-800 hover:border-slate-800 text-white rounded font-bold cursor-pointer"
-                    >
-                      Confirm Rename
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Active Budgets lists mapping */}
             <ActiveBudgets 
               budgets={budgets} 
@@ -2038,18 +1925,18 @@ export default function App() {
             </div>
 
             {/* Advisor Tip of the week panel */}
-            <div id="alert-advisor-tip" className="bg-[#eff4ff]/60 border border-[#dce9ff] rounded-lg p-5 flex items-start gap-4">
-              <span className="p-2 bg-white rounded border border-[#dce9ff] text-[#2070e4] shrink-0 mt-0.5">
+            <div id="alert-advisor-tip" className="bg-blue-950/30 border border-blue-900/60 rounded-xl p-5 flex items-start gap-4">
+              <span className="p-2 bg-blue-900/30 rounded-lg border border-blue-800/40 text-blue-400 shrink-0 mt-0.5">
                 <Users className="w-5 h-5 animate-pulse" />
               </span>
               <div className="space-y-1">
-                <h5 className="font-bold text-xs text-[#0058be] uppercase tracking-widest text-[10px]">Advisor Tip</h5>
-                <p className="text-xs text-slate-600 font-sans leading-relaxed">
+                <h5 className="font-bold text-xs text-blue-400 uppercase tracking-widest text-[10px]">Advisor Tip</h5>
+                <p className="text-xs text-slate-300 font-sans leading-relaxed">
                   {advisorTip.text}
                 </p>
                 <button 
                   onClick={advisorTip.onClick} 
-                  className="text-xs font-bold text-[#0058be] hover:underline block pt-1.5 cursor-pointer shadow-none bg-transparent hover:bg-transparent border-0 p-0"
+                  className="text-xs font-bold text-blue-400 hover:text-blue-300 hover:underline block pt-1.5 cursor-pointer shadow-none bg-transparent hover:bg-transparent border-0 p-0"
                 >
                   {advisorTip.actionLabel} &rarr;
                 </button>
@@ -2060,6 +1947,98 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Quick Create Budget Modal Overlay */}
+      {showQuickCreate && (
+        <div className="fixed inset-0 z-50 bg-[#040817]/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-slate-900 max-w-sm w-full p-6 rounded-xl border border-slate-800 shadow-2xl space-y-4 font-sans text-xs">
+            <h4 className="font-bold text-base text-white leading-snug">Create Structural Budget</h4>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400">Budget Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Savings Bucket" 
+                  value={newNameInput}
+                  onChange={(e) => setNewNameInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded text-xs outline-none focus:border-rose-400 transition-colors font-bold font-sans"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400">Starting Balance ($)</label>
+                <input 
+                  type="number" 
+                  placeholder="0.00" 
+                  value={newBalanceInput}
+                  onChange={(e) => setNewBalanceInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded text-xs outline-none focus:border-rose-400 transition-colors"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button 
+                onClick={() => setShowQuickCreate(false)}
+                className="px-3 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-white rounded font-bold cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleCreateNewBudget}
+                className="px-5 py-2 bg-rose-700 hover:bg-rose-600 text-white rounded font-bold cursor-pointer transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Rename Budget Modal Overlay */}
+      {showQuickRename && (
+        <div className="fixed inset-0 z-50 bg-[#040817]/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-slate-900 max-w-sm w-full p-6 rounded-xl border border-slate-800 shadow-2xl space-y-4 font-sans text-xs">
+            <h4 className="font-bold text-base text-white leading-snug">Rename Structural Budget</h4>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400">Select Budget</label>
+                <select
+                  value={oldRenameSelect}
+                  onChange={(e) => setOldRenameSelect(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded text-xs text-white outline-none focus:border-rose-400 cursor-pointer font-sans"
+                >
+                  {Object.keys(budgets).map((name) => (
+                    <option key={name} value={name} className="bg-slate-950 text-white">{name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400">New Target Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Swiss Alps Expedition" 
+                  value={newNameSelect}
+                  onChange={(e) => setNewNameSelect(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded text-xs outline-none focus:border-rose-400 transition-colors"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button 
+                onClick={() => setShowQuickRename(false)}
+                className="px-3 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-white rounded font-bold cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleRenameBudget}
+                className="px-5 py-2 bg-rose-700 hover:bg-rose-600 text-white rounded font-bold cursor-pointer transition-colors"
+              >
+                Confirm Rename
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Collaboration Session Join and Peer modal config */}
       {showJoinModal && (
