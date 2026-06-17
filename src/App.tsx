@@ -140,6 +140,10 @@ export default function App() {
   const [oldRenameSelect, setOldRenameSelect] = useState("");
   const [newNameSelect, setNewNameSelect] = useState("");
 
+  const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
+  const [budgetToReset, setBudgetToReset] = useState<string | null>(null);
+  const [resetBalanceAmountInput, setResetBalanceAmountInput] = useState<string>("");
+
   // --- Persistence & Offline Logging trigger ---
   useEffect(() => {
     if (userEmail) {
@@ -358,7 +362,7 @@ export default function App() {
       const res = await fetch(`/api/rooms/${code}`);
       const data = await res.json();
       if (data.error) {
-        alert("The room code was not recognized. Please verify with peers.");
+        triggerToast("The room code was not recognized. Please verify with peers.", "warning");
         return;
       }
       setRoomId(code);
@@ -675,7 +679,7 @@ export default function App() {
 
     const amountVal = parseFloat(txAmount);
     if (isNaN(amountVal) || amountVal <= 0) {
-      alert("Please enter a valid amount.");
+      triggerToast("Please enter a valid amount.", "warning");
       return;
     }
 
@@ -789,7 +793,7 @@ export default function App() {
     // Pick target budget automatically or fallback to first budget
     const targetBudget = activeBudgetFilter || Object.keys(budgets)[0];
     if (!targetBudget) {
-      alert("Create an active budget first!");
+      triggerToast("Create an active budget first!", "warning");
       return;
     }
 
@@ -894,6 +898,70 @@ export default function App() {
     triggerToast(`Erase successful: cleared ${ids.length} entries.`, "success");
   };
 
+  // --- BATCH IMPORT TRANSACTIONS (CSV / EXCEL) ---
+  const handleImportTransactionsBatch = (importedTx: Transaction[], newBudgetsToCreate: string[]) => {
+    if (importedTx.length === 0) return;
+
+    // 1. If we have new budgets to create, add them
+    setBudgets((prev) => {
+      const next = { ...prev };
+      
+      // Create new budgets if they don't exist
+      newBudgetsToCreate.forEach((name) => {
+        if (!next[name]) {
+          next[name] = {
+            name,
+            balance: 0.0,
+            created: new Date().toISOString().slice(0, 19).replace("T", " ")
+          };
+          
+          // Sync new budget creation
+          registerSyncAction("create_budget", {
+            name,
+            balance: 0.0,
+            created: new Date().toISOString().slice(0, 19).replace("T", " ")
+          });
+        }
+      });
+
+      // Update balances for all transaction entries
+      importedTx.forEach((tx) => {
+        const bName = tx.budget;
+        if (next[bName]) {
+          const change = tx.type === "profit" ? tx.amount : -tx.amount;
+          next[bName] = {
+            ...next[bName],
+            balance: next[bName].balance + change
+          };
+        }
+      });
+
+      return next;
+    });
+
+    // 2. Add imported transactions to state & trigger classifier training and sync actions
+    setTransactions((prev) => [...prev, ...importedTx]);
+    
+    importedTx.forEach((tx) => {
+      registerSyncAction("add_transaction", { transaction: tx });
+      // Retrain Naive Bayes classifier on each description to learn classification pattern dynamically
+      transactionClassifier.train(tx.description, tx.budget);
+    });
+
+    // 3. Register Undo step
+    pushUndoStep({
+      type: "add_recurring", // reusable or we can just trigger list undo
+      data: {
+        transactionIds: importedTx.map((t) => t.id),
+        budgetName: importedTx[0]?.budget || "General",
+        totalBalanceOffset: importedTx.reduce((sum, t) => sum + (t.type === "profit" ? t.amount : -t.amount), 0)
+      },
+      timestamp: Date.now()
+    });
+
+    triggerToast(`Statement Import Complete! Integrated ${importedTx.length} ledger logs to storage.`, "success");
+  };
+
   // --- QUICK BUDGET MANAGEMENT ROUTINES ---
   const handleCreateNewBudget = () => {
     const rawVal = parseFloat(newBalanceInput);
@@ -901,11 +969,11 @@ export default function App() {
     const nameClean = newNameInput.trim();
 
     if (!nameClean) {
-      alert("Please enter a valid budget name.");
+      triggerToast("Please enter a valid budget name.", "warning");
       return;
     }
     if (budgets[nameClean]) {
-      alert("A budget with this name already exists.");
+      triggerToast("A budget with this name already exists.", "warning");
       return;
     }
 
@@ -936,7 +1004,7 @@ export default function App() {
 
     if (!oldName || !newName) return;
     if (budgets[newName]) {
-      alert("A budget with that name already exists!");
+      triggerToast("A budget with that name already exists!", "warning");
       return;
     }
 
@@ -966,15 +1034,13 @@ export default function App() {
   const handleResetBalance = (budgetName: string) => {
     const currentBudget = budgets[budgetName];
     if (!currentBudget) return;
+    setBudgetToReset(budgetName);
+    setResetBalanceAmountInput(currentBudget.balance.toString());
+  };
 
-    const raw = prompt(`Reset balance for '${budgetName}'\nCurrent balance: ${formatCurrency(currentBudget.balance)}\nEnter new balance:`, currentBudget.balance.toString());
-    if (raw === null) return;
-
-    const val = parseFloat(raw);
-    if (isNaN(val)) {
-      alert("Please enter a valid number.");
-      return;
-    }
+  const performResetBalance = (budgetName: string, val: number) => {
+    const currentBudget = budgets[budgetName];
+    if (!currentBudget) return;
 
     setBudgets((prev) => ({
       ...prev,
@@ -989,7 +1055,9 @@ export default function App() {
       timestamp: Date.now()
     });
 
-    triggerToast(`Balance adjusted for '${budgetName}'`, "success");
+    triggerToast(`Balance adjusted for '${budgetName}' to ${formatCurrency(val)}`, "success");
+    setBudgetToReset(null);
+    setResetBalanceAmountInput("");
   };
 
   const handleSetBudgetGoal = (budgetName: string, goal: number | undefined) => {
@@ -1013,10 +1081,12 @@ export default function App() {
   };
 
   const handleDeleteBudgetDirect = (budgetName: string) => {
+    setBudgetToDelete(budgetName);
+  };
+
+  const performDeleteBudget = (budgetName: string) => {
     const target = budgets[budgetName];
     if (!target) return;
-
-    if (!confirm(`Are you sure you want to delete budget '${budgetName}' and all its transactions? This action is undoable.`)) return;
 
     const relatedTransactions = transactions.filter((t) => t.budget === budgetName);
 
@@ -1037,12 +1107,12 @@ export default function App() {
 
     triggerToast(`Wiped budget '${budgetName}' from ledger.`, "warning");
     setActiveBudgetFilter(null);
+    setBudgetToDelete(null);
   };
 
   const handleArchiveOldFunds = () => {
-    alert("Clearing simulated memory buffers. All transactions settled. Real-time connections reconfirmed with server.");
     setPaidBills([]);
-    triggerToast("Accounts consolidated and logs re-archived.", "success");
+    triggerToast("Memory buffers cleared, active accounts consolidated and logs re-archived successfully.", "success");
   };
 
   // --- COMPUTE LIQUIDITY STATS ---
@@ -1234,6 +1304,7 @@ export default function App() {
         onLogout={handleLogout}
         onShowJoinModal={() => setShowJoinModal(true)}
         onDisconnectRoom={handleDisconnectRoom}
+        onShowToast={triggerToast}
       />
 
       {/* Main Screen Container content area */}
@@ -1317,7 +1388,7 @@ export default function App() {
                 onClick={() => {
                   const bList = Object.keys(budgets);
                   if (bList.length === 0) {
-                    alert("Please create a budget first via Quick Actions panel.");
+                    triggerToast("Please create a budget first via Quick Actions panel.", "warning");
                     return;
                   }
                   setActiveBudgetFilter(bList[0]);
@@ -1355,6 +1426,8 @@ export default function App() {
               transactions={transactions} 
               mode="budget-view"
               onDeleteTransactions={handleDeleteTransactionsBatch}
+              onImportTransactions={handleImportTransactionsBatch}
+              existingBudgetNames={Object.keys(budgets)}
             />
           </div>
         ) : currentTab === "projections" ? (
@@ -1525,9 +1598,7 @@ export default function App() {
                         {budgets[activeBudgetFilter]?.targetBalance !== undefined && budgets[activeBudgetFilter]!.targetBalance! > 0 && (
                           <button
                             onClick={() => {
-                              if (confirm("Remove your budget goal target balance?")) {
-                                handleSetBudgetGoal(activeBudgetFilter, undefined);
-                              }
+                              handleSetBudgetGoal(activeBudgetFilter, undefined);
                             }}
                             className="text-[11px] text-slate-500 hover:text-rose-450 font-sans cursor-pointer hover:underline"
                           >
@@ -1782,6 +1853,8 @@ export default function App() {
                   mode="budget-view"
                   selectedBudgetFilter={activeBudgetFilter}
                   onDeleteTransactions={handleDeleteTransactionsBatch}
+                  onImportTransactions={handleImportTransactionsBatch}
+                  existingBudgetNames={Object.keys(budgets)}
                 />
               </div>
 
@@ -1867,7 +1940,7 @@ export default function App() {
                     onClick={() => {
                       const list = Object.keys(budgets);
                       if (list.length === 0) {
-                        alert("Please create a budget first!");
+                        triggerToast("Please create a budget first!", "warning");
                         return;
                       }
                       setOldRenameSelect(list[0]);
@@ -2052,6 +2125,86 @@ export default function App() {
           onDisconnectRoom={handleDisconnectRoom}
           onClose={() => setShowJoinModal(false)}
         />
+      )}
+
+      {/* Custom Budget Elimination Modal overlay */}
+      {budgetToDelete && (
+        <div className="fixed inset-0 z-50 bg-[#040817]/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-slate-900 max-w-sm w-full p-6 rounded-xl border border-slate-800 shadow-2xl space-y-4 font-sans text-xs">
+            <h4 className="font-bold text-base text-white leading-snug">Confirm Budget Elimination</h4>
+            <div className="space-y-2">
+              <p className="text-slate-300 font-sans">
+                Are you sure you want to delete budget <strong className="text-rose-400">'{budgetToDelete}'</strong> and all associated transaction history entries?
+              </p>
+              <p className="text-[11px] text-amber-500 font-bold bg-amber-500/10 border border-amber-500/20 rounded p-2.5 font-sans">
+                ⚠ Note: This action is fully undoable using the system's live memory stack (Cmd/Ctrl + Z), but will clear active calculations immediately.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button 
+                onClick={() => setBudgetToDelete(null)}
+                className="px-3 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-white rounded font-bold cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => performDeleteBudget(budgetToDelete)}
+                className="px-5 py-2 bg-rose-700 hover:bg-rose-600 text-white rounded font-bold cursor-pointer transition-colors"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Balance adjustment / Reset Modal overlay */}
+      {budgetToReset && (
+        <div className="fixed inset-0 z-50 bg-[#040817]/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-slate-900 max-w-sm w-full p-6 rounded-xl border border-slate-800 shadow-2xl space-y-4 font-sans text-xs">
+            <h4 className="font-bold text-base text-white leading-snug">Reset Budget Balance</h4>
+            <div className="space-y-3">
+              <p className="text-slate-300 font-sans">
+                Adjust ledger settings for starting capsule balance of <strong className="text-rose-400">'{budgetToReset}'</strong>.
+              </p>
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400">New Target Balance ($)</label>
+                <input 
+                  type="number" 
+                  step="any"
+                  placeholder="0.00" 
+                  value={resetBalanceAmountInput}
+                  onChange={(e) => setResetBalanceAmountInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded text-xs outline-none focus:border-rose-400 transition-colors font-bold font-sans"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button 
+                onClick={() => {
+                  setBudgetToReset(null);
+                  setResetBalanceAmountInput("");
+                }}
+                className="px-3 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-white rounded font-bold cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  const val = parseFloat(resetBalanceAmountInput);
+                  if (isNaN(val)) {
+                    triggerToast("Please enter a valid balance amount.", "warning");
+                    return;
+                  }
+                  performResetBalance(budgetToReset, val);
+                }}
+                className="px-5 py-2 bg-rose-700 hover:bg-rose-600 text-white rounded font-bold cursor-pointer transition-colors"
+              >
+                Update Balance
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Floating System-wide action Alerts Toasts */}

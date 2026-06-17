@@ -27,6 +27,7 @@ interface SidebarProps {
   onShowJoinModal: () => void;
   onDisconnectRoom: () => void;
   onLogout?: () => void;
+  onShowToast?: (msg: string, type?: "success" | "info" | "warning") => void;
 }
 
 export default function Sidebar({
@@ -40,7 +41,8 @@ export default function Sidebar({
   userName = "Guest User",
   onShowJoinModal,
   onDisconnectRoom,
-  onLogout
+  onLogout,
+  onShowToast
 }: SidebarProps) {
   
   const menuItems = [
@@ -194,7 +196,11 @@ export default function Sidebar({
         </div>
 
         <div className="flex flex-col gap-1 text-slate-400 text-xs font-medium">
-          <button id="btn-sidebar-help" onClick={() => alert("Need help? We save your money plans automatically, so you can check and update them even without internet!")} className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer">
+          <button id="btn-sidebar-help" onClick={() => {
+            if (onShowToast) {
+              onShowToast("Need help? We save your money plans automatically, so you can check and update them even without internet!", "info");
+            }
+          }} className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer">
             <HelpCircle className="w-4 h-4" />
             <span>Help</span>
           </button>
@@ -203,8 +209,8 @@ export default function Sidebar({
             onClick={() => {
               if (onLogout) {
                 onLogout();
-              } else {
-                alert("You logged out! Your app is still saved and ready on the server.");
+              } else if (onShowToast) {
+                onShowToast("You logged out! Your app is still saved and ready on the server.", "info");
               }
             }} 
             className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer"

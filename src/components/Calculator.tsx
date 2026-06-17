@@ -37,6 +37,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
 
   // Temporary Sandbox entries
   const [entries, setEntries] = useState<HypotheticalEntry[]>([]);
+  const [errorText, setErrorText] = useState("");
 
   // Form parameters
   const [formType, setFormType] = useState<"profit" | "expense">("expense");
@@ -52,9 +53,10 @@ export default function Calculator({ budgets }: CalculatorProps) {
     e.preventDefault();
     const amountVal = parseFloat(formAmount);
     if (isNaN(amountVal) || amountVal <= 0) {
-      alert("Please enter a valid positive number for transaction amount.");
+      setErrorText("Please enter a valid positive number for transaction amount.");
       return;
     }
+    setErrorText("");
 
     const newEntry: HypotheticalEntry = {
       id: "hypo-" + Math.random().toString(36).substring(2, 9),
@@ -418,13 +420,20 @@ export default function Calculator({ budgets }: CalculatorProps) {
                 )}
 
                 {/* Submissions button */}
-                <button
-                  type="submit"
-                  className="w-full py-2 bg-rose-700 hover:bg-rose-600 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm shadow-rose-700/20"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Entry</span>
-                </button>
+                <div className="w-full flex flex-col gap-2">
+                  {errorText && (
+                    <p className="text-xs text-rose-455 font-semibold bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg animate-fade-in font-sans">
+                      ⚠ {errorText}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    className="w-full py-2 bg-rose-700 hover:bg-rose-600 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm shadow-rose-700/20"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Entry</span>
+                  </button>
+                </div>
               </div>
             </form>
 

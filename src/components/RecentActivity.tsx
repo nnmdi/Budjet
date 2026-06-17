@@ -8,17 +8,21 @@ import {
   FileText, 
   Filter, 
   CircleDot, 
-  BadgeAlert 
+  BadgeAlert,
+  Upload
 } from "lucide-react";
 import { useState } from "react";
 import { Transaction } from "../types";
 import { formatCurrency } from "../utils";
+import ImportTransactions from "./ImportTransactions";
 
 interface RecentActivityProps {
   transactions: Transaction[];
   mode: "dashboard" | "budget-view";
   selectedBudgetFilter?: string; // Optional: restrict to a single budget
   onDeleteTransactions?: (ids: string[]) => void;
+  onImportTransactions?: (importedTx: Transaction[], newBudgetsToCreate: string[]) => void;
+  existingBudgetNames?: string[];
 }
 
 export default function RecentActivity({
@@ -26,10 +30,13 @@ export default function RecentActivity({
   mode,
   selectedBudgetFilter,
   onDeleteTransactions,
+  onImportTransactions,
+  existingBudgetNames,
 }: RecentActivityProps) {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
 
   // Filter based on parent context or search keyword
   const filtered = transactions
@@ -158,6 +165,19 @@ export default function RecentActivity({
   }
 
   // Mode 2: Budget Detail fully featured list (Screenshot 2)
+  if (mode === "budget-view" && isImporting && onImportTransactions) {
+    return (
+      <ImportTransactions
+        existingBudgets={existingBudgetNames || []}
+        onImportComplete={(newData, missingBudgets) => {
+          onImportTransactions(newData, missingBudgets);
+          setIsImporting(false);
+        }}
+        onCancel={() => setIsImporting(false)}
+      />
+    );
+  }
+
   return (
     <div id="recent-activity-tabular" className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
       {/* Table search & Actions Header bar */}
@@ -193,6 +213,17 @@ export default function RecentActivity({
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Erase Selected ({selectedIds.length})</span>
+            </button>
+          )}
+
+          {onImportTransactions && (
+            <button
+              onClick={() => setIsImporting(true)}
+              className="px-3 py-2 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-rose-450 hover:text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer hover:border-rose-500/30"
+              title="Import local CSV or statement files"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Import CSV/Excel</span>
             </button>
           )}
 

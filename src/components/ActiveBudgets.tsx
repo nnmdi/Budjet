@@ -31,8 +31,6 @@ export default function ActiveBudgets({ budgets, transactions, onManageBudget, o
             onClick={() => {
               if (onShowToast) {
                 onShowToast("Showing your budget categories and spending limits!", "info");
-              } else {
-                alert("Checking all budgets...");
               }
             }} 
             className="text-xs font-bold text-rose-400 hover:text-rose-300 hover:underline cursor-pointer"

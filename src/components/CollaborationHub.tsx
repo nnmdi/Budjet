@@ -35,6 +35,7 @@ export default function CollaborationHub({
   
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const [errorText, setErrorText] = useState("");
 
   const handleCopyCode = () => {
     if (roomId) {
@@ -48,9 +49,10 @@ export default function CollaborationHub({
     e.preventDefault();
     const cleanCode = roomCodeInput.trim();
     if (cleanCode.length !== 6 || isNaN(Number(cleanCode))) {
-      alert("Please enter a valid 6-digit collaboration code.");
+      setErrorText("Please enter a valid 6-digit collaboration code.");
       return;
     }
+    setErrorText("");
     onJoinRoom(cleanCode);
     setRoomCodeInput("");
   };
@@ -119,9 +121,17 @@ export default function CollaborationHub({
                       maxLength={6}
                       placeholder="e.g. 581290"
                       value={roomCodeInput}
-                      onChange={(e) => setRoomCodeInput(e.target.value.replace(/\D/g, ""))}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-center text-sm font-mono tracking-widest font-black text-white outline-none focus:border-rose-500 transition-all"
+                      onChange={(e) => {
+                        setRoomCodeInput(e.target.value.replace(/\D/g, ""));
+                        if (errorText) setErrorText("");
+                      }}
+                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-center text-sm font-mono tracking-widest font-black text-white outline-none focus:border-rose-500 transition-all font-sans"
                     />
+                    {errorText && (
+                      <p className="text-[10px] text-rose-455 font-semibold mt-1.5 leading-tight font-sans">
+                        ⚠ {errorText}
+                      </p>
+                    )}
                   </div>
                   <button
                     type="submit"
