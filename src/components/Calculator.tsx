@@ -7,7 +7,8 @@ import {
   Layers, 
   DollarSign, 
   Lightbulb, 
-  Briefcase 
+  Briefcase,
+  Download
 } from "lucide-react";
 import { Budget, HypotheticalEntry } from "../types";
 import { formatCurrency, generateScheduleDates } from "../utils";
@@ -48,6 +49,61 @@ export default function Calculator({ budgets }: CalculatorProps) {
   const [customStep, setCustomStep] = useState("1");
   const [formCount, setFormCount] = useState("1");
 
+  // Choose whether to enter start date or not
+  const [provideDate, setProvideDate] = useState(false);
+  const [formStartDate, setFormStartDate] = useState(new Date().toISOString().slice(0, 10));
+
+  // Export scenario function
+  const handleExportCSV = () => {
+    if (entries.length === 0) return;
+
+    const headers = ["ID", "Type", "Description", "Amount ($)", "Frequency", "Start Date", "Occurrences", "Total Impact ($)", "Custom Timing Interval"];
+    const rows = entries.map(entry => {
+      const isProfit = entry.type === "profit";
+      const totalImpact = entry.amount * (entry.frequency === "o" ? 1 : entry.count);
+      
+      let freqText = "";
+      if (entry.frequency === "o") freqText = "Just once";
+      else if (entry.frequency === "d") freqText = "Every day";
+      else if (entry.frequency === "w") freqText = "Every week";
+      else if (entry.frequency === "b") freqText = "Every two weeks";
+      else if (entry.frequency === "m") freqText = "Every month";
+      else if (entry.frequency === "y") freqText = "Every year";
+      else if (entry.frequency === "c") freqText = `Custom (${entry.customStep} ${entry.customUnit})`;
+
+      return [
+        entry.id,
+        entry.type === "profit" ? "Income" : "Expense",
+        `"${entry.description.replace(/"/g, '""')}"`,
+        isProfit ? entry.amount : -entry.amount,
+        freqText,
+        entry.startDate ? entry.startDate : "No Date",
+        entry.frequency === "o" ? 1 : entry.count,
+        isProfit ? totalImpact : -totalImpact,
+        entry.frequency === "c" ? `${entry.customStep} ${entry.customUnit}` : "N/A"
+      ];
+    });
+
+    const csvContent = [
+      ["Cash Diet - What-If Scenario Plan Export"],
+      [`Generated At: ${new Date().toLocaleString()}`],
+      [`Starting Balance Base: ${startingBalance}`],
+      [],
+      headers,
+      ...rows
+    ].map(e => e.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `what_if_scenario_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Handle addition of entry
   const handleAddEntry = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +121,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
       description: formDesc.trim() || `Hypothetical ${formType}`,
       frequency: formFreq,
       count: parseInt(formCount) || 1,
-      startDate: new Date().toISOString().slice(0, 10),
+      startDate: provideDate ? formStartDate : "",
     };
 
     if (formFreq === "c") {
@@ -78,6 +134,8 @@ export default function Calculator({ budgets }: CalculatorProps) {
     setFormDesc("");
     setFormFreq("o");
     setFormCount("1");
+    // Preserve custom date but we can uncheck date toggle
+    setProvideDate(false);
   };
 
   const handleDeleteEntry = (id: string) => {
@@ -97,7 +155,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
     entries.forEach((entry) => {
       // Find matches in 12-month calendar
       const scheduleDates = generateScheduleDates(
-        entry.startDate,
+        entry.startDate || new Date().toISOString().slice(0, 10),
         entry.frequency,
         entry.customUnit,
         entry.customStep,
@@ -140,7 +198,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
     
     entries.forEach((entry) => {
       const scheduleDates = generateScheduleDates(
-        entry.startDate,
+        entry.startDate || new Date().toISOString().slice(0, 10),
         entry.frequency,
         entry.customUnit,
         entry.customStep,
@@ -324,8 +382,8 @@ export default function Calculator({ budgets }: CalculatorProps) {
                     onChange={(e) => setFormType(e.target.value as "profit" | "expense")}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-rose-500 font-medium outline-none cursor-pointer"
                   >
-                    <option value="expense font-sans">Expense (You pay)</option>
-                    <option value="profit font-sans">Income (You get paid)</option>
+                    <option value="expense">Expense (You pay)</option>
+                    <option value="profit">Income (You get paid)</option>
                   </select>
                 </div>
 
@@ -388,6 +446,35 @@ export default function Calculator({ budgets }: CalculatorProps) {
                 </div>
               )}
 
+              {/* Optional Date Selection */}
+              <div className="p-4 bg-slate-950/40 rounded-xl border border-slate-800 flex flex-col sm:flex-row sm:items-center gap-4 transition-all">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="include-start-date-checkbox"
+                    checked={provideDate}
+                    onChange={(e) => setProvideDate(e.target.checked)}
+                    className="w-4 h-4 text-rose-600 bg-slate-900 border-slate-800 rounded focus:ring-rose-500 accent-rose-600 cursor-pointer"
+                  />
+                  <label htmlFor="include-start-date-checkbox" className="text-xs font-bold text-slate-300 cursor-pointer select-none">
+                    Choose to enter specific date for this transaction
+                  </label>
+                </div>
+
+                {provideDate && (
+                  <div className="flex items-center gap-2.5 animate-fade-in sm:ml-auto">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Start Date:</span>
+                    <input
+                      type="date"
+                      required={provideDate}
+                      value={formStartDate}
+                      onChange={(e) => setFormStartDate(e.target.value)}
+                      className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white outline-none focus:border-rose-500 font-mono"
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Description & count rows */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div className="md:col-span-2">
@@ -442,12 +529,24 @@ export default function Calculator({ budgets }: CalculatorProps) {
               <div className="flex items-center justify-between mb-3 text-xs font-semibold text-slate-400">
                 <span>What-If List ({entries.length})</span>
                 {entries.length > 0 && (
-                  <button 
-                    onClick={handleClearScenario}
-                    className="text-rose-400 hover:text-rose-300 font-bold hover:underline cursor-pointer"
-                  >
-                    Clear All
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      type="button"
+                      onClick={handleExportCSV}
+                      className="text-emerald-400 hover:text-emerald-300 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export CSV / Excel</span>
+                    </button>
+                    <span className="text-slate-800">|</span>
+                    <button 
+                      type="button"
+                      onClick={handleClearScenario}
+                      className="text-rose-400 hover:text-rose-300 font-bold hover:underline cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -468,6 +567,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
                               {entry.frequency === "o" ? "Once" : entry.frequency}
                             </span> 
                             {entry.frequency !== "o" && ` • Running ${entry.count} times`}
+                            {entry.startDate ? ` • Starts: ${entry.startDate}` : ` • No Date`}
                           </p>
                         </div>
                       </div>

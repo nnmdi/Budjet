@@ -53,7 +53,7 @@ function normalizeType(typeStr: string, amountNum: number): "profit" | "expense"
     return "expense";
   }
   // fallback based on value
-  return amountNum < 0 ? "expense" : "expense"; // default is expense
+  return amountNum >= 0 ? "profit" : "expense";
 }
 
 // Generate an elegant unique key ID
@@ -154,10 +154,8 @@ export default function ImportTransactions({
         finalType = normalizeType(rawType, amountNum);
       } else {
         // Guess type based on sign of the amount
-        finalType = amountNum >= 0 ? "expense" : "expense"; 
-        if (amountNum < 0) {
-          amountNum = absoluteAmount; // store as positive, type handles sign
-        }
+        finalType = amountNum >= 0 ? "profit" : "expense"; 
+        amountNum = absoluteAmount; // store as positive, type handles sign
       }
 
       // Smart Categorization & Automatic Classification
