@@ -1,3 +1,4 @@
+import { apiAvailable, apiUrl } from "./api";
 import React, { useState, useEffect, useMemo, FormEvent } from "react";
 import { 
   Plus, 
@@ -262,10 +263,10 @@ export default function App() {
 
   // --- REAL-TIME COLLABORATIVE STREAMING (SSE) EFFECT ---
   useEffect(() => {
-    if (!roomId || !online) return;
+    if (!roomId || !online || !apiAvailable) return;
 
     console.log(`Setting up real-time stream subscription for Room: ${roomId}`);
-    const source = new EventSource(`/api/rooms/${roomId}/stream?clientId=${clientId}&name=${encodeURIComponent(userName)}&email=${encodeURIComponent(userEmail)}`);
+    const source = new EventSource(apiUrl(`/api/rooms/${roomId}/stream?clientId=${clientId}&name=${encodeURIComponent(userName)}&email=${encodeURIComponent(userEmail)}`));
 
     source.addEventListener("user_joined", (e: any) => {
       const data = JSON.parse(e.data);
@@ -307,7 +308,7 @@ export default function App() {
     };
 
     // Grab initial room structural payload
-    fetch(`/api/rooms/${roomId}`)
+    fetch(apiUrl(`/api/rooms/${roomId}`))
       .then((r) => r.json())
       .then((data) => {
         if (data && !data.error) {
@@ -325,8 +326,12 @@ export default function App() {
 
   // --- COLLABORATION ACTIONS (Create & Join) ---
   const handleCreateRoom = async () => {
+    if (!apiAvailable) {
+      triggerToast("Shared rooms are unavailable here. Your personal budgets still save on this device.", "info");
+      return;
+    }
     try {
-      const res = await fetch("/api/rooms", { method: "POST" });
+      const res = await fetch(apiUrl("/api/rooms"), { method: "POST" });
       const data = await res.json();
       if (data.success) {
         setRoomId(data.roomId);
@@ -358,8 +363,12 @@ export default function App() {
   };
 
   const handleJoinRoom = async (code: string) => {
+    if (!apiAvailable) {
+      triggerToast("Shared rooms are unavailable here. Your personal budgets still save on this device.", "info");
+      return;
+    }
     try {
-      const res = await fetch(`/api/rooms/${code}`);
+      const res = await fetch(apiUrl(`/api/rooms/${code}`));
       const data = await res.json();
       if (data.error) {
         triggerToast("The room code was not recognized. Please verify with peers.", "warning");
@@ -386,6 +395,7 @@ export default function App() {
 
   // --- ACTION SYNCHRONIZER ENGINE ---
   const syncActionsToCloud = async (roomCode: string, actionLogs: SyncAction[]) => {
+    if (!apiAvailable) return;
     if (!online) {
       // Save to client offline queue
       const existing = localStorage.getItem("budgetmanager_v3_offline_queue");
@@ -397,7 +407,7 @@ export default function App() {
     }
 
     try {
-      const res = await fetch(`/api/rooms/${roomCode}/sync`, {
+      const res = await fetch(apiUrl(`/api/rooms/${roomCode}/sync`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2213,3 +2223,4 @@ export default function App() {
     </div>
   );
 }
+

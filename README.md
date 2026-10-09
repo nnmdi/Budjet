@@ -90,3 +90,12 @@ To run this project locally:
    ```bash
    npm start
    ```
+
+
+## GitHub Pages
+
+The static frontend is built with `npm run build:pages` and deployed by `.github/workflows/pages.yml`. Enable **Settings → Pages → Source → GitHub Actions**, then run **Publish Budjet to GitHub Pages** from Actions. The site URL is `https://nnmdi.github.io/Budjet/`. A private source repository requires a GitHub plan supporting Pages in private repositories.
+
+The website is publicly accessible to anyone with the link. `noindex` and `robots.txt` request that search engines avoid listing it; these are not access controls. Personal budgets save in this browser. Data from the old Cloud Run domain stays there; export and import it to transfer it.
+
+Anomaly detection runs locally in the Pages build. Shared rooms require an externally hosted Express API. To enable them, set the Actions repository variable `VITE_API_BASE_URL` to its HTTPS origin, configure that server to allow CORS from `https://nnmdi.github.io`, and rerun the workflow. Leave the variable empty for the standalone personal-budget app. Never put secret keys in `VITE_*` variables.

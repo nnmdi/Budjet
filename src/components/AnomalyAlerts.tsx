@@ -1,3 +1,4 @@
+import { apiAvailable, apiUrl } from "../api";
 import React, { useState, useEffect } from "react";
 import { AlertTriangle, TrendingUp, Info, ChevronDown, ChevronUp, Sparkles, Check } from "lucide-react";
 import { Transaction } from "../types";
@@ -38,7 +39,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
 
     const fetchAnomalies = async () => {
       try {
-        const res = await fetch("/api/analytics/anomalies", {
+        const res = await fetch(apiUrl("/api/analytics/anomalies"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -152,7 +153,12 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
       setAnomalies(localAnomalies.slice(0, 15));
     };
 
-    fetchAnomalies();
+    if (apiAvailable) {
+      fetchAnomalies();
+    } else {
+      runLocalAnomalyTracker();
+      setLoading(false);
+    }
 
     return () => {
       isMounted = false;
@@ -345,3 +351,4 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
     </div>
   );
 }
+
