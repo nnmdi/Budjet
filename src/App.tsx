@@ -1293,7 +1293,7 @@ export default function App() {
 
   // Render proper sub views
   return (
-    <div id="application-container" className="min-h-screen dark-theme bg-slate-950 text-slate-705 pl-64 font-sans antialiased">
+    <div id="application-container" className="min-h-screen dark-theme bg-slate-950 text-slate-705 lg:pl-64 font-sans antialiased">
       
       {/* Sidebar navigation */}
       <Sidebar
@@ -1318,7 +1318,7 @@ export default function App() {
       />
 
       {/* Main Screen Container content area */}
-      <main id="app-main" className="pt-6 pb-20 pl-4 pr-8 sm:pl-5">
+      <main id="app-main" className="min-w-0 px-4 pt-5 pb-20 sm:px-6 lg:pr-8">
 
         {/* Guest Warning Banner */}
         {!userEmail && isGuestMode && (
@@ -1349,7 +1349,7 @@ export default function App() {
         )}
         
         {/* Dynamic Nav Header Bar */}
-        <header id="tab-nav-header" className="flex items-center justify-between gap-x-12 flex-wrap sm:flex-nowrap mb-8 border-b border-slate-800/80 pb-5">
+        <header id="tab-nav-header" className="flex items-center justify-between gap-4 flex-wrap xl:flex-nowrap mb-8 border-b border-slate-800/80 pb-5">
           <div className="flex items-center gap-4">
             {activeBudgetFilter ? (
               <button
@@ -1360,13 +1360,13 @@ export default function App() {
                 <ArrowLeft className="w-4 h-4" />
               </button>
             ) : null}
-            <h2 id="view-title" className="text-2xl font-black tracking-tight text-white capitalize">
+            <h2 id="view-title" className="text-xl sm:text-2xl font-black tracking-tight text-white capitalize break-words">
               {activeBudgetFilter ? `Budget / ${activeBudgetFilter}` : (currentTab === "dashboard" ? "Home" : currentTab)}
             </h2>
           </div>
 
           {/* Desktop utility controls and ADD TRANSACTION BUTTON */}
-          <div id="header-actions" className="flex items-center gap-4">
+          <div id="header-actions" className="flex items-center gap-2 sm:gap-4 flex-wrap">
             
             {/* Search Box */}
             <div className="hidden sm:block text-slate-400 text-xs bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-lg w-52 flex items-center justify-between font-medium">

@@ -1,4 +1,6 @@
+import { useState, useEffect, useRef } from "react";
 import { 
+  Menu, X,
   LayoutDashboard, 
   Wallet, 
   History, 
@@ -45,6 +47,36 @@ export default function Sidebar({
   onShowToast
 }: SidebarProps) {
   
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const drawer = useRef<HTMLElement>(null);
+  const closeMenu = () => { setMobileOpen(false); menuButton.current?.focus(); };
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    drawer.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); closeMenu(); }
+      if (event.key === "Tab") {
+        const buttons = drawer.current?.querySelectorAll<HTMLButtonElement>("button");
+        if (!buttons?.length) return;
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const media = window.matchMedia("(min-width: 1024px)");
+    const onResize = () => { if (media.matches) setMobileOpen(false); };
+    media.addEventListener("change", onResize);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+      media.removeEventListener("change", onResize);
+    };
+  }, [mobileOpen]);
+
   const menuItems = [
     { id: "dashboard", label: "Home", icon: LayoutDashboard },
     { id: "budgets", label: "Budgets", icon: Wallet },
@@ -54,11 +86,18 @@ export default function Sidebar({
   ];
 
   return (
-    <aside 
+    <>
+      <div id="mobile-nav-bar" className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+        <span className="font-bold text-white">🍽️ Cash Diet <span className="text-[10px] text-rose-400">BETA</span></span>
+        <button ref={menuButton} aria-label="Open navigation" aria-expanded={mobileOpen} aria-controls="app-sidebar" onClick={() => setMobileOpen(true)} className="min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-slate-800 text-rose-400"><Menu className="w-5 h-5" /></button>
+      </div>
+      {mobileOpen && <button aria-label="Close navigation" tabIndex={-1} onClick={closeMenu} className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />}
+    <aside ref={drawer} 
       id="app-sidebar" 
-      className="w-64 bg-slate-950/80 border-r border-slate-800 flex flex-col justify-between h-screen fixed top-0 left-0 z-30 font-sans p-6 text-slate-255 backdrop-blur-md"
+      className={`${mobileOpen ? "flex" : "hidden"} lg:flex w-72 lg:w-64 max-w-[85vw] bg-slate-950 border-r border-slate-800 flex-col justify-between gap-8 h-dvh overflow-y-auto overscroll-contain fixed top-0 left-0 z-50 lg:z-30 font-sans p-5 lg:p-6 text-slate-255 backdrop-blur-md`}
     >
       <div>
+        <button aria-label="Close menu" onClick={closeMenu} className="lg:hidden ml-auto mb-3 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-800 text-rose-400"><X className="w-5 h-5" /></button>
         {/* Brand Header */}
         <div id="brand-header" className="mb-8 flex items-center gap-3 px-1">
           <div className="w-9 h-9 bg-rose-700 rounded-lg flex items-center justify-center font-bold text-[#050a18] shadow-md shadow-rose-700/35 shrink-0">🍽️💵</div>
@@ -88,7 +127,7 @@ export default function Sidebar({
 
           {!roomId ? (
             <button
-              onClick={onShowJoinModal}
+              onClick={() => { onShowJoinModal(); closeMenu(); }}
               className="w-full py-2 px-3 bg-rose-700 hover:bg-rose-600 text-xs font-semibold text-white rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-rose-700/30"
             >
               <Radio className="w-3.5 h-3.5 animate-pulse" />
@@ -150,7 +189,8 @@ export default function Sidebar({
               <button
                 key={item.id}
                 id={`nav-${item.id}`}
-                onClick={() => onChangeTab(item.id)}
+                aria-current={active ? "page" : undefined}
+                onClick={() => { onChangeTab(item.id); closeMenu(); }}
                 className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                   active 
                     ? "bg-slate-800 text-rose-400 border border-slate-700/50 shadow-md font-semibold" 
@@ -168,7 +208,7 @@ export default function Sidebar({
         {/* New Scenario Sidebar Shortcut */}
         <div id="new-scenario-box" className="mt-8 pt-4 border-t border-slate-800">
           <button
-            onClick={onTriggerNewScenario}
+            onClick={() => { onTriggerNewScenario(); closeMenu(); }}
             id="btn-sidebar-new-scenario"
             className="w-full py-2.5 px-4 bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold tracking-wider uppercase rounded-xl transition-all shadow-sm shadow-rose-700/30 text-center cursor-pointer"
           >
@@ -221,5 +261,7 @@ export default function Sidebar({
         </div>
       </div>
     </aside>
+    </>
   );
 }
+

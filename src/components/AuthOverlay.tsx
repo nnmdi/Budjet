@@ -110,7 +110,7 @@ export default function AuthOverlay({ onLogin, onGuest }: AuthOverlayProps) {
       
       <div 
         id="auth-card" 
-        className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 overflow-hidden animate-fadeIn"
+        className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl space-y-6 overflow-hidden animate-fadeIn"
       >
         {/* Simple elegant logo design */}
         <div className="flex flex-col items-center text-center space-y-3.5">
@@ -267,3 +267,4 @@ export default function AuthOverlay({ onLogin, onGuest }: AuthOverlayProps) {
     </div>
   );
 }
+

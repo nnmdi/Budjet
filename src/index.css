@@ -155,3 +155,30 @@ body {
   background-color: var(--color-slate-850) !important;
 }
 
+
+
+/* Responsive phone and tablet layout. Tables scroll inside their own cards. */
+#app-main > *, #app-main .grid > * { min-width: 0; }
+button, input, select, textarea { touch-action: manipulation; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--color-rose-400); outline-offset: 3px; }
+@media (max-width: 1023px) {
+  #app-main { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  #app-sidebar { padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 639px) {
+  #tab-nav-header { align-items: flex-start; }
+  #tab-nav-header > div:first-child { width: 100%; min-width: 0; }
+  #header-actions { width: 100%; justify-content: space-between; }
+  #header-actions > div:first-child { margin-left: 0 !important; }
+  #view-title { margin-right: 0 !important; overflow-wrap: anywhere; }
+  #app-main button, #app-sidebar button { min-height: 44px; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px !important; }
+  #app-main .p-6 { padding: 1rem; }
+  #app-main .gap-8 { gap: 1.25rem; }
+  #app-main table { min-width: 600px; }
+  #application-container > .fixed.inset-0 { overflow-y: auto; align-items: flex-start; padding-top: max(1rem, env(safe-area-inset-top)); }
+  #application-container > .fixed.inset-0 > div { margin-block: auto; max-height: calc(100dvh - 2rem); overflow-y: auto; }
+  #auth-shield-viewport { align-items: flex-start; }
+  #auth-card { margin-block: auto; }
+  #toast-wrapper { padding-bottom: env(safe-area-inset-bottom); }
+}
