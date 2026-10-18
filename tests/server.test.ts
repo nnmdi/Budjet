@@ -13,21 +13,25 @@ import {
   emptyLedger,
 } from "../src/domain/ledger";
 const password = "test-password-12345";
-const account = (store: Store, email = "a@example.test") =>
-  store.register(email, "Test", password);
-test("server stores salted password hashes and authenticates correctly", () => {
+const account = async (store: Store, email = "a@example.test") => {
+  const user = await store.register(email, "Test", password);
+  const link = store.issueEmailToken(email, "verify")!;
+  await store.verifyEmail(link.token, password);
+  return user;
+};
+test("server stores salted password hashes and authenticates correctly", async () => {
   const s = new Store(":memory:");
-  const user = account(s);
+  const user = await account(s);
   const raw = s.db.prepare("SELECT password FROM users").get() as any;
   assert.ok(!raw.password.includes(password));
-  assert.equal(s.login(user.email, password).id, user.id);
-  assert.throws(() => s.login(user.email, "wrong"));
-  assert.throws(() => account(s));
+  assert.equal((await s.login(user.email, password)).id, user.id);
+  await assert.rejects(() => s.login(user.email, "wrong"));
+  await assert.rejects(() => account(s));
   s.close();
 });
-test("sessions are opaque, hashed, expiring and revocable", () => {
+test("sessions are opaque, hashed, expiring and revocable", async () => {
   const s = new Store(":memory:");
-  const user = account(s);
+  const user = await account(s);
   const token = s.session(user.id);
   const stored = s.db.prepare("SELECT hash FROM sessions").get() as any;
   assert.notEqual(stored.hash, token);
@@ -39,10 +43,10 @@ test("sessions are opaque, hashed, expiring and revocable", () => {
   assert.throws(() => s.user(expired));
   s.close();
 });
-test("personal data is isolated and invalid saves are atomic", () => {
+test("personal data is isolated and invalid saves are atomic", async () => {
   const s = new Store(":memory:");
-  const a = account(s),
-    b = account(s, "b@example.test");
+  const a = await account(s),
+    b = await account(s, "b@example.test");
   const key = `personal:${a.id}`;
   assert.throws(() => s.read(key, b.id));
   const before = s.read(key, a.id);
@@ -50,9 +54,9 @@ test("personal data is isolated and invalid saves are atomic", () => {
   assert.deepEqual(s.read(key, a.id), before);
   s.close();
 });
-test("stale writes cannot overwrite a newer ledger", () => {
+test("stale writes cannot overwrite a newer ledger", async () => {
   const s = new Store(":memory:");
-  const a = account(s),
+  const a = await account(s),
     key = `personal:${a.id}`;
   const saved = s.write(
     key,
@@ -65,10 +69,10 @@ test("stale writes cannot overwrite a newer ledger", () => {
   assert.equal(s.read(key, a.id).ledger.budgets.A.balance, 1000);
   s.close();
 });
-test("room bootstrap copies a snapshot without double counting; membership required", () => {
+test("room bootstrap copies a snapshot without double counting; membership required", async () => {
   const s = new Store(":memory:");
-  const a = account(s),
-    b = account(s, "b@example.test");
+  const a = await account(s),
+    b = await account(s, "b@example.test");
   const ledger = addTransactions(createBudget(emptyLedger(), "A", 1000, "a"), [
     {
       id: "one",
@@ -89,11 +93,11 @@ test("room bootstrap copies a snapshot without double counting; membership requi
   assert.equal(s.read(room.roomId, b.id).ledger.budgets.A.balance, 900);
   s.close();
 });
-test("owners can rotate invitations and revoke members", () => {
+test("owners can rotate invitations and revoke members", async () => {
   const s = new Store(":memory:");
-  const a = account(s),
-    b = account(s, "b@example.test"),
-    c = account(s, "c@example.test");
+  const a = await account(s),
+    b = await account(s, "b@example.test"),
+    c = await account(s, "c@example.test");
   const room = s.createRoom(a.id, emptyLedger());
   s.join(room.roomId, b.id, room.invitation.split(".")[1]);
   assert.equal(s.roomsForUser(b.id)[0].id, room.roomId);
@@ -107,11 +111,11 @@ test("owners can rotate invitations and revoke members", () => {
   assert.throws(() => s.read(room.roomId, b.id));
   s.close();
 });
-test("SQLite data and sessions survive reopening with private file permissions", () => {
+test("SQLite data and sessions survive reopening with private file permissions", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cash-diet-test-")),
     file = path.join(dir, "test.sqlite");
   let s = new Store(file);
-  const a = account(s),
+  const a = await account(s),
     token = s.session(a.id);
   s.write(
     `personal:${a.id}`,
@@ -164,8 +168,18 @@ async function http(
   };
 }
 test("API enforces credentials, CSRF origins and HttpOnly secure sessions without sockets", async () => {
+  const mail: { text: string }[] = [];
   const s = new Store(":memory:"),
-    app = createApp(s, { origin: "https://cash.example", production: true });
+    app = createApp(s, {
+      origin: "https://cash.example",
+      production: true,
+      mailer: {
+        ready: true,
+        async send(message) {
+          mail.push(message);
+        },
+      },
+    });
   assert.equal((await http(app, "GET", "/api/workspace")).status, 401);
   assert.equal(
     (
@@ -185,11 +199,28 @@ test("API enforces credentials, CSRF origins and HttpOnly secure sessions withou
     name: "A",
     password,
   });
-  assert.equal(signup.status, 200);
-  assert.match(signup.cookie, /HttpOnly/);
-  assert.match(signup.cookie, /Secure/);
-  assert.match(signup.cookie, /SameSite=Lax/);
-  const cookie = signup.cookie.split(";")[0];
+  assert.equal(signup.status, 202);
+  assert.equal(signup.cookie, "");
+  await app.locals.drainEmail();
+  const verification = mail[0].text.match(/#verify-email=([a-f0-9]{64})/)![1];
+  assert.equal(
+    (
+      await http(app, "POST", "/api/auth/verify-email", {
+        token: verification,
+        password,
+      })
+    ).status,
+    200,
+  );
+  const login = await http(app, "POST", "/api/auth/login", {
+    email: "a@example.test",
+    password,
+  });
+  assert.equal(login.status, 200);
+  assert.match(login.cookie, /HttpOnly/);
+  assert.match(login.cookie, /Secure/);
+  assert.match(login.cookie, /SameSite=Lax/);
+  const cookie = login.cookie.split(";")[0];
   assert.equal(
     (await http(app, "GET", "/api/workspace", undefined, cookie)).status,
     200,

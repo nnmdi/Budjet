@@ -1,0 +1,14 @@
+.git
+node_modules
+dist
+build
+coverage
+.env
+.env.*
+!.env.example
+data
+backups
+rooms_db.json
+*.sqlite
+*.sqlite-*
+*.log

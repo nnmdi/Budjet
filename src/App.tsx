@@ -1,3 +1,4 @@
+import AccountAction, { readAccountLink } from "./components/AccountAction";
 import { apiAvailable } from "./api";
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -56,6 +57,7 @@ import {
 } from "./domain/ledger";
 const makeId = () => crypto.randomUUID();
 export default function App() {
+  const [accountAction, setAccountAction] = useState(readAccountLink);
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [authReady, setAuthReady] = useState(!apiAvailable);
@@ -119,7 +121,7 @@ export default function App() {
       localStorage.removeItem("budgetmanager_accounts");
       localStorage.removeItem("budjet_dynamic_ml_data");
     } catch {}
-    if (apiAvailable)
+    if (apiAvailable && !accountAction)
       request("/api/auth/me")
         .then((data) => {
           setUserEmail(data.user.email);
@@ -498,6 +500,19 @@ export default function App() {
     };
   }, [budgets, transactions]);
 
+  if (accountAction)
+    return (
+      <AccountAction
+        action={accountAction}
+        onDone={() => {
+          setAccountAction(null);
+          setUserEmail("");
+          setUserName("");
+          setIsGuestMode(false);
+          setAuthReady(true);
+        }}
+      />
+    );
   if (!authReady)
     return (
       <div className="p-8 text-white bg-slate-950 min-h-screen">

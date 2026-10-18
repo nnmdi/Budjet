@@ -1,9 +1,9 @@
+import { hashPassword, checkPassword, validPassword } from "./passwords";
 import { DatabaseSync } from "node:sqlite";
 import {
   createHash,
   randomBytes,
   randomUUID,
-  scryptSync,
   timingSafeEqual,
 } from "node:crypto";
 import fs from "node:fs";
@@ -28,15 +28,47 @@ export class Store {
     }
     this.db = new DatabaseSync(filename);
     if (filename !== ":memory:") fs.chmodSync(filename, 0o600);
-    this.db
-      .exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
-      CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE,name TEXT NOT NULL,password TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires INTEGER NOT NULL);
-      CREATE TABLE IF NOT EXISTS ledgers(id TEXT PRIMARY KEY,owner TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,data TEXT NOT NULL,version INTEGER NOT NULL,invite TEXT);
-      CREATE TABLE IF NOT EXISTS members(ledger_id TEXT NOT NULL REFERENCES ledgers(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,PRIMARY KEY(ledger_id,user_id));
-      PRAGMA user_version=1;`);
+    const version = Number(
+      this.db.prepare("PRAGMA user_version").get()!.user_version,
+    );
+    if (version > 2) {
+      this.db.close();
+      throw new Error("This database requires a newer version of Cash Diet.");
+    }
+    this.db.exec(
+      "PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; BEGIN IMMEDIATE;",
+    );
+    try {
+      this.db
+        .exec(`CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE,name TEXT NOT NULL,password TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires INTEGER NOT NULL);
+        CREATE TABLE IF NOT EXISTS ledgers(id TEXT PRIMARY KEY,owner TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,data TEXT NOT NULL,version INTEGER NOT NULL,invite TEXT);
+        CREATE TABLE IF NOT EXISTS members(ledger_id TEXT NOT NULL REFERENCES ledgers(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,PRIMARY KEY(ledger_id,user_id));`);
+      const columns = this.db.prepare("PRAGMA table_info(users)").all();
+      if (!columns.some((c) => c.name === "verified_at"))
+        this.db.exec("ALTER TABLE users ADD COLUMN verified_at INTEGER;");
+      if (!columns.some((c) => c.name === "auth_version"))
+        this.db.exec(
+          "ALTER TABLE users ADD COLUMN auth_version INTEGER NOT NULL DEFAULT 0;",
+        );
+      this.db
+        .exec(`CREATE TABLE IF NOT EXISTS email_tokens(hash TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,purpose TEXT NOT NULL CHECK(purpose IN ('verify','reset')),expires INTEGER NOT NULL);
+        CREATE INDEX IF NOT EXISTS email_token_user ON email_tokens(user_id,purpose);
+        CREATE TABLE IF NOT EXISTS auth_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS auth_limit_expiry ON auth_limits(expires);
+        PRAGMA user_version=2; COMMIT;`);
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      this.db.close();
+      throw error;
+    }
   }
-  register(email: string, name: string, password: string, timeZone = "UTC") {
+
+  async register(
+    email: string,
+    name: string,
+    password: string,
+    timeZone = "UTC",
+  ) {
     if (
       typeof email !== "string" ||
       email.length > 254 ||
@@ -60,21 +92,18 @@ export class Store {
       throw new AppError(400, "Choose a valid timezone.");
     }
     email = email.trim().toLowerCase();
-    const salt = randomBytes(16).toString("hex");
-    const hash = scryptSync(password, salt, 64).toString("hex");
-    const user = { id: randomUUID(), email, name: name.trim() };
-    const schema = this.db.prepare("PRAGMA user_version").get() as {
-      user_version: number;
+    const hashed = await hashPassword(password);
+    const user = {
+      id: randomUUID(),
+      email,
+      name: name.trim(),
+      emailVerified: false,
     };
-    if (schema.user_version > 1) {
-      this.db.close();
-      throw new Error("This database requires a newer version of Cash Diet.");
-    }
     this.db.exec("BEGIN IMMEDIATE");
     try {
       this.db
-        .prepare("INSERT INTO users VALUES(?,?,?,?)")
-        .run(user.id, email, user.name, `${salt}:${hash}`);
+        .prepare("INSERT INTO users(id,email,name,password) VALUES(?,?,?,?)")
+        .run(user.id, email, user.name, hashed);
       this.db
         .prepare("INSERT INTO ledgers VALUES(?,?,?,?,?,NULL)")
         .run(
@@ -96,26 +125,59 @@ export class Store {
       throw e;
     }
   }
-  login(email: string, password: string) {
+  async login(email: string, password: string) {
     if (
       typeof email !== "string" ||
-      typeof password !== "string" ||
       email.length > 254 ||
+      typeof password !== "string" ||
       password.length > 128
     )
       throw new AppError(401, "Email or password is incorrect.");
     const row = this.db
       .prepare("SELECT * FROM users WHERE email=?")
       .get(email.trim().toLowerCase()) as any;
-    const [salt, expected] = (
-      row?.password || `${"0".repeat(32)}:${"0".repeat(128)}`
-    ).split(":");
-    const actual = scryptSync(password, salt, 64);
-    if (!row || !timingSafeEqual(actual, Buffer.from(expected, "hex")))
+    if (!(await checkPassword(password, row?.password)))
       throw new AppError(401, "Email or password is incorrect.");
-    return { id: row.id, email: row.email, name: row.name };
+    const current = this.db
+      .prepare("SELECT password,verified_at,auth_version FROM users WHERE id=?")
+      .get(row.id) as any;
+    if (!current || current.password !== row.password)
+      throw new AppError(401, "Credentials changed. Sign in again.");
+    if (!current.verified_at)
+      throw new AppError(403, "Verify your email before signing in.");
+    if (!row.password.startsWith("scrypt-v2:")) {
+      const upgraded = await hashPassword(password);
+      if (
+        !this.db
+          .prepare(
+            "UPDATE users SET password=? WHERE id=? AND password=? AND auth_version=?",
+          )
+          .run(upgraded, row.id, row.password, current.auth_version).changes
+      )
+        throw new AppError(401, "Credentials changed. Sign in again.");
+    }
+    return {
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      emailVerified: true,
+      authVersion: Number(current.auth_version),
+    };
   }
-  session(userId: string) {
+  session(userId: string, expectedVersion?: number) {
+    if (
+      expectedVersion !== undefined &&
+      !this.db
+        .prepare("SELECT 1 FROM users WHERE id=? AND auth_version=?")
+        .get(userId, expectedVersion)
+    )
+      throw new AppError(401, "Credentials changed. Sign in again.");
+    if (
+      !this.db
+        .prepare("SELECT 1 FROM users WHERE id=? AND verified_at IS NOT NULL")
+        .get(userId)
+    )
+      throw new AppError(403, "Verify your email before signing in.");
     this.db.prepare("DELETE FROM sessions WHERE expires<?").run(Date.now());
     const token = randomBytes(32).toString("hex");
     this.db
@@ -128,7 +190,7 @@ export class Store {
       throw new AppError(401, "Sign in to continue.");
     const row = this.db
       .prepare(
-        "SELECT users.id,email,name FROM users JOIN sessions ON users.id=sessions.user_id WHERE hash=? AND expires>?",
+        "SELECT users.id,email,name FROM users JOIN sessions ON users.id=sessions.user_id WHERE hash=? AND expires>? AND verified_at IS NOT NULL",
       )
       .get(digest(token), Date.now());
     if (!row) throw new AppError(401, "Sign in to continue.");
@@ -136,6 +198,153 @@ export class Store {
   }
   logout(token: string) {
     this.db.prepare("DELETE FROM sessions WHERE hash=?").run(digest(token));
+  }
+  issueEmailToken(
+    email: string,
+    purpose: "verify" | "reset",
+    now = Date.now(),
+  ) {
+    if (typeof email !== "string" || email.length > 254) return null;
+    const user = this.db
+      .prepare("SELECT id,email,verified_at FROM users WHERE email=?")
+      .get(email.trim().toLowerCase()) as any;
+    if (!user || (purpose === "verify" && user.verified_at)) return null;
+    const token = randomBytes(32).toString("hex");
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db
+        .prepare(
+          "DELETE FROM email_tokens WHERE expires<=? OR (user_id=? AND purpose=?)",
+        )
+        .run(now, user.id, purpose);
+      this.db
+        .prepare("INSERT INTO email_tokens VALUES(?,?,?,?)")
+        .run(
+          digest(token),
+          user.id,
+          purpose,
+          now + (purpose === "verify" ? 24 * 3600000 : 30 * 60000),
+        );
+      this.db.exec("COMMIT");
+      return { token, email: user.email, userId: user.id };
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  discardEmailToken(token: string) {
+    this.db.prepare("DELETE FROM email_tokens WHERE hash=?").run(digest(token));
+  }
+  private emailToken(token: string, purpose: "verify" | "reset", now: number) {
+    if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token))
+      throw new AppError(
+        400,
+        "This link is invalid or expired. Request a new email.",
+      );
+    const row = this.db
+      .prepare(
+        "SELECT email_tokens.user_id,users.password FROM email_tokens JOIN users ON users.id=email_tokens.user_id WHERE hash=? AND purpose=? AND expires>?",
+      )
+      .get(digest(token), purpose, now) as any;
+    if (!row)
+      throw new AppError(
+        400,
+        "This link is invalid or expired. Request a new email.",
+      );
+    return row;
+  }
+  async verifyEmail(token: string, password: string, now = Date.now()) {
+    const row = this.emailToken(token, "verify", now);
+    if (!(await checkPassword(password, row.password)))
+      throw new AppError(
+        400,
+        "The account password is incorrect. Use password recovery if you did not create this account.",
+      );
+    this.completeEmailAction(token, "verify", row.user_id, now);
+  }
+  async resetPassword(token: string, password: string, now = Date.now()) {
+    this.emailToken(token, "reset", now);
+    if (!validPassword(password))
+      throw new AppError(400, "Use a password of 12–128 characters.");
+    const hash = await hashPassword(password);
+    const row = this.emailToken(
+      token,
+      "reset",
+      Date.now() > now ? Date.now() : now,
+    );
+    this.completeEmailAction(token, "reset", row.user_id, now, hash);
+    return this.db
+      .prepare("SELECT email FROM users WHERE id=?")
+      .get(row.user_id) as { email: string };
+  }
+  private completeEmailAction(
+    token: string,
+    purpose: "verify" | "reset",
+    userId: string,
+    now: number,
+    password?: string,
+  ) {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.emailToken(token, purpose, Math.max(now, Date.now()));
+      const removed = this.db
+        .prepare(
+          "DELETE FROM email_tokens WHERE hash=? AND user_id=? AND purpose=?",
+        )
+        .run(digest(token), userId, purpose);
+      if (removed.changes !== 1)
+        throw new AppError(400, "This link has already been used.");
+      if (password)
+        this.db
+          .prepare(
+            "UPDATE users SET password=?,verified_at=COALESCE(verified_at,?),auth_version=auth_version+1 WHERE id=?",
+          )
+          .run(password, now, userId);
+      else
+        this.db
+          .prepare(
+            "UPDATE users SET verified_at=COALESCE(verified_at,?),auth_version=auth_version+1 WHERE id=?",
+          )
+          .run(now, userId);
+      this.db.prepare("DELETE FROM sessions WHERE user_id=?").run(userId);
+      this.db.prepare("DELETE FROM email_tokens WHERE user_id=?").run(userId);
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  rateLimit(key: string, max: number, windowMs = 15 * 60000) {
+    const now = Date.now();
+    this.db.prepare("DELETE FROM auth_limits WHERE expires<=?").run(now);
+    if (
+      !this.db
+        .prepare("SELECT 1 FROM auth_limits WHERE key=?")
+        .get(digest(key)) &&
+      Number(
+        this.db.prepare("SELECT count(*) AS n FROM auth_limits").get()!.n,
+      ) >= 20000
+    )
+      throw new AppError(429, "Authentication is busy. Try again later.");
+    this.db
+      .prepare(
+        "INSERT INTO auth_limits VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1",
+      )
+      .run(digest(key), now + windowMs);
+    if (
+      Number(
+        this.db
+          .prepare("SELECT count FROM auth_limits WHERE key=?")
+          .get(digest(key))!.count,
+      ) > max
+    )
+      throw new AppError(429, "Too many attempts. Try again later.");
+  }
+  ready() {
+    this.db.prepare("SELECT 1").get();
+    return (
+      Number(this.db.prepare("PRAGMA user_version").get()!.user_version) === 2
+    );
   }
   private authorize(id: string, userId: string) {
     const row = this.db

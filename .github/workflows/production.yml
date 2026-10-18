@@ -1,0 +1,48 @@
+name: Production container checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: docker build -t cash-diet:ci .
+      - name: Start production container with a persistent test volume
+        run: |
+          docker volume create cash-diet-ci
+          docker run -d --name cash-diet-ci -p 127.0.0.1:3100:3000 -v cash-diet-ci:/data \
+            -e APP_URL=https://cash.example -e MAIL_PROVIDER=resend \
+            -e RESEND_API_KEY=ci-placeholder-never-used -e MAIL_FROM=security@example.test cash-diet:ci
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3100/api/ready >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          docker logs cash-diet-ci
+          exit 1
+      - run: node scripts/check-deployment.cjs http://127.0.0.1:3100 --allow-http
+      - name: Check data ownership, backup, and restart persistence
+        run: |
+          docker exec --user node cash-diet-ci node -e "const{DatabaseSync}=require('node:sqlite');const db=new DatabaseSync('/data/cash-diet.sqlite');db.prepare('INSERT INTO users(id,email,name,password) VALUES(?,?,?,?)').run('ci-sentinel','ci@example.test','CI','test-fixture');db.close();"
+          docker exec --user node cash-diet-ci npm run backup -- /data/ci-backup.sqlite
+          docker restart cash-diet-ci
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3100/api/ready >/dev/null; then break; fi
+            sleep 2
+          done
+          node scripts/check-deployment.cjs http://127.0.0.1:3100 --allow-http
+          docker exec --user node cash-diet-ci node -e "const a=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=require('node:sqlite');a.notEqual(process.getuid(),0);for(const file of ['/data/cash-diet.sqlite','/data/ci-backup.sqlite']){a.equal(fs.statSync(file).mode&511,384);const d=new DatabaseSync(file,{readOnly:true});a.equal(d.prepare('SELECT name FROM users WHERE id=?').get('ci-sentinel').name,'CI');a.equal(d.prepare('PRAGMA integrity_check').get().integrity_check,'ok');d.close();}"
+      - name: Logs and cleanup
+        if: always()
+        run: |
+          docker logs cash-diet-ci 2>/dev/null || true
+          docker rm -f cash-diet-ci 2>/dev/null || true
+          docker volume rm cash-diet-ci 2>/dev/null || true

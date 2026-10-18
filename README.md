@@ -7,7 +7,7 @@ The ledger derives balances from opening balances and posted transactions using 
 ## Two ways to use it
 
 - **GitHub Pages:** browser-only local profiles with full JSON backup/restore. Profiles have no passwords or access protection and stay in that browser.
-- **Hosted backend:** server accounts with salted password hashes, HttpOnly sessions, durable SQLite records, and authenticated private rooms. Requires HTTPS and a persistent data volume in production.
+- **Hosted backend:** email-verified server accounts with password recovery, salted password hashes, HttpOnly sessions, durable SQLite records, and authenticated private rooms. Requires HTTPS and a persistent data volume in production.
 
 The repository remains `nnmdi/Budjet` and the Pages path remains `/Budjet/`; Cash Diet is the application name. Existing personal data migrates using the same profile email and origin. Old local passwords do not become server credentials.
 
@@ -31,7 +31,7 @@ npm run build
 NODE_ENV=production APP_URL=https://your-real-origin DATA_DIR=/private/persistent/cash-diet npm start
 ```
 
-Production requires an HTTPS origin and persistent DATA_DIR. See [ledger, migration, security, deployment, and backup details](docs/LEDGER_AND_SECURITY.md) before deploying. The backend has not been deployed by this code update. Email verification, recovery, and production security/operations checks remain before a public account service or real banking.
+Production requires an HTTPS origin and persistent DATA_DIR. See [ledger, migration, security, deployment, and backup details](docs/LEDGER_AND_SECURITY.md) before deploying. Email verification and password recovery are implemented. The Docker image, Railway configuration, and automated production checks are ready; actual hosting, verified email delivery, and operational checks must pass before real banking. Follow the [production runbook](docs/PRODUCTION.md).
 
 ## GitHub Pages
 
