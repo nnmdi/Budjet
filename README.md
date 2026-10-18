@@ -1,101 +1,47 @@
-# 📈 Cash Diet: Automated Financial Tracking & Treasury Forecasting Pipeline
+# Cash Diet
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-success)](https://ais-pre-t3zydiqi6qmoghgbmbm5vs-605585368137.us-west2.run.app) 
-*Explore our live app on Google Cloud Run: [ais-pre-t3zydiqi6qmoghgbmbm5vs-605585368137.us-west2.run.app](https://ais-pre-t3zydiqi6qmoghgbmbm5vs-605585368137.us-west2.run.app)*
+A personal finance prototype for tracking budgets, recording income and expenses, importing CSV statements, and exploring cashflow scenarios.
 
-Cash Diet is a full-stack personal finance application powered by an automated data pipeline. Beyond standard expense tracking, it actively processes financial records and simulates historical volatility to generate a 90-day cashflow and Treasury-style trend forecast. 
+## Current implementation
 
-This project bridges the gap between everyday financial management and quantitative risk analytics, utilizing a simplified, user-friendly language designed to be clear and accessible to everyone.
+- React 19, TypeScript, Vite, Tailwind CSS, and Express.
+- Budgets, transaction history, savings targets, and a recurring bills checklist.
+- CSV import with column mapping and a local Naive Bayes category classifier.
+- What-if calculator, experimental cashflow forecasts, and statistical spending alerts.
+- Browser storage for personal data; optional shared rooms through Express and Server-Sent Events.
+- GitHub Pages deployment for the static personal-budget interface.
 
----
+**Prototype limitations:** login profiles and passwords currently live in browser storage, and shared rooms do not enforce server-side authentication. Forecasts can use synthetic history when records are sparse. Do not treat the current login as secure account protection or the forecast as a validated prediction. See the [code review and prioritized roadmap](docs/CASH_DIET_REVIEW.md) for findings and reproduction results.
 
-## 🏗️ Architecture & Data Pipeline (ETL)
+This repository does not currently include the separate FastAPI services, PostgreSQL, or Plaid bank connection code.
 
-This application is built on a resilient data engineering foundation, designed to handle extraction, transformation, and automated loading/syncing.
-
-*   **Extract:** Retrieves public financial base parameters and syncs with existing live balances and ongoing recurring costs automatically.
-*   **Transform:** Processes and cleans raw JSON payloads, standardizing dates, calculating category spending envelopes, and processing transactional data for clean analysis.
-*   **Load & Automate:** Integrates with persistent storage queues to reliably store and sync record history, with automated triggers ensuring synchronization and reactive recalculation.
-
----
-
-## 📊 Predictive Forecasting: 90-Day Treasury Yield & Cashflow Forecast
-
-A core feature of Cash Diet is our forward-looking financial forecasting tool:
-
-*   **90-Day Money Forecast:** Rather than relying purely on historical lookbacks, the application is driven by a predictive mockup model that uses historical spending patterns to simulate potential cashflow trends over the next 90 days. This provides users with a clear visual representation of best-case and worst-case scenarios ("confidence bands") to avoid running out of cash.
-*   **What-If Money Calculator:** Allows interactive sandbox testing where users can simulate the long-term impact of future financial events (e.g., adding expenses, salary boosts, or changing frequencies) without altering live transactional logs.
-
----
-
-## 💻 Tech Stack
-
-*   **Frontend:** React 18, TypeScript, Tailwind CSS, Lucide React (unified iconography), SVG Math Sparklines
-*   **Backend & Pipeline:** Node.js, Express
-*   **Real-Time Sync:** Server-Sent Events (SSE) for instant multiplayer room updates
-*   **Deployment:** Google Cloud Run (GCP)
-*   **Data & Persistence:** Structured Local-First Persistence with queue-based fallback syncing
-
----
-
-## 🎯 Business Impact & Use Case
-
-I developed Cash Diet to demonstrate end-to-end full-stack capabilities. Deploying a live application on Google Cloud Run that continuously ingests, cleans, and simulates real-world financial data in real time demonstrates a complete understanding of product lifecycle, cloud infrastructure, offline-first design, and interactive analytic visualization.
-
----
-
-## 📁 Directory Setup
+## Local development
 
 ```bash
-├── server.ts              # Express Real-Time SSE Server (CJS Built)
-├── src/
-│   ├── main.tsx           # Application Entry Point
-│   ├── App.tsx            # Main Application Shell & Core State Engine
-│   ├── types.ts           # Standard Financial Typings, Enums, and Interfaces
-│   ├── utils.ts           # Financial Math Helpers, Formatters, & Base Presets
-│   ├── index.css          # Tailwind Rules & Typography Variables
-│   └── components/        # Isolated Modular Presentation Views
-│       ├── Sidebar.tsx            # Navigation rail & brand banner
-│       ├── ActiveBudgets.tsx      # SVG Sparklines & target monitors (Savings Pool, Safety Fund)
-│       ├── Calculator.tsx         # What-If Money Calculator & cashflow registers
-│       ├── DueToday.tsx           # Bills & Income Checklist
-│       ├── SmartProjections.tsx   # My 90-Day Money Forecast (Sureness Levels & Confidence Paths)
-│       ├── ProjectionInsights.tsx # Visual 12-month money goal target progress
-│       ├── RecentActivity.tsx     # Filterable spreadsheet of recent transactions (My Money Journal)
-│       ├── CollaborationHub.tsx   # Real-time room generator & synchronization controls
-│       └── Toast.tsx              # Reactive notifications manager
+git clone https://github.com/nnmdi/Budjet.git cash-diet
+cd cash-diet
+npm ci
+npm run dev
 ```
 
----
+The development server listens on port 3000.
 
-## 🚀 Local Setup & Installation
+```bash
+npm run lint
+npm run build
+NODE_ENV=production npm start
+```
 
-To run this project locally:
-
-1. Clone or download your repository: `git clone https://github.com/YourUsername/cash-diet.git`
-2. Navigate to the directory: `cd cash-diet`
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the development server (frontend hot-reloader + Express backend):
-   ```bash
-   npm run dev
-   ```
-5. Build for production (bundles backend using `esbuild` and frontend using `vite`):
-   ```bash
-   npm run build
-   ```
-6. Run the production build locally:
-   ```bash
-   npm start
-   ```
-
+`npm run lint` currently runs TypeScript checking; it does not run ESLint or functional tests.
 
 ## GitHub Pages
 
-The static frontend is built with `npm run build:pages` and deployed by `.github/workflows/pages.yml`. Enable **Settings → Pages → Source → GitHub Actions**, then run **Publish Budjet to GitHub Pages** from Actions. The site URL is `https://nnmdi.github.io/Budjet/`. A private source repository requires a GitHub plan supporting Pages in private repositories.
+Run `npm run build:pages` to build the static frontend. The **Publish Cash Diet to GitHub Pages** workflow builds and deploys pushes to `main`. Enable **Settings → Pages → Source → GitHub Actions**.
 
-The website is publicly accessible to anyone with the link. `noindex` and `robots.txt` request that search engines avoid listing it; these are not access controls. Personal budgets save in this browser. Data from the old Cloud Run domain stays there; export and import it to transfer it.
+The current repository URL is `https://github.com/nnmdi/Budjet`, and its Pages path is `https://nnmdi.github.io/Budjet/`. Cash Diet is the application name; the repository slug and Pages base path remain `Budjet` so existing links keep working. Existing browser-storage keys also remain compatible with saved data.
 
-Anomaly detection runs locally in the Pages build. Shared rooms require an externally hosted Express API. To enable them, set the Actions repository variable `VITE_API_BASE_URL` to its HTTPS origin, configure that server to allow CORS from `https://nnmdi.github.io`, and rerun the workflow. Leave the variable empty for the standalone personal-budget app. Never put secret keys in `VITE_*` variables.
+Personal budgets save in the current browser and origin. Data from another domain does not transfer automatically. The CSV export/import flow transfers transaction rows, not a complete account backup.
+
+Shared rooms require a running Express API. `VITE_API_BASE_URL` configures an external API origin for a Pages build, but the current server still needs an explicit CORS implementation for cross-origin use. The standalone Pages build calculates anomaly alerts locally. Never put secret keys in `VITE_*` variables.
+
+`robots.txt` and `noindex` request search-engine exclusion; they do not restrict access.

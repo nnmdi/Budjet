@@ -1,4 +1,4 @@
-name: Publish Budjet to GitHub Pages
+name: Publish Cash Diet to GitHub Pages
 on:
   push:
     branches: [main]

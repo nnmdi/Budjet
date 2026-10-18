@@ -74,7 +74,7 @@ app.post("/api/rooms", (req, res) => {
       {
         id: Math.random().toString(),
         userName: "System",
-        userEmail: "system@budgetmanager.app",
+        userEmail: "system@cash-diet.invalid",
         action: `Collaborative financial room established. Code: ${roomId}`,
         timestamp: new Date().toISOString(),
       },
@@ -482,7 +482,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`BudgetManager server booted: Running on http://localhost:${PORT}`);
+    console.log(`Cash Diet server booted: Running on http://localhost:${PORT}`);
   });
 }
 
