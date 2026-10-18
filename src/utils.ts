@@ -1,3 +1,4 @@
+import { dateOnly } from "./domain/ledger";
 import { Budget, Transaction } from "./types";
 
 // Format value as USDcurrency
@@ -12,7 +13,7 @@ export function formatCurrency(amount: number): string {
 // Add month offset with leap-year awareness (translation of add_months in python)
 export function addMonths(startDate: Date, months: number): Date {
   const d = new Date(startDate.getTime());
-  const expectedMonth = ((startDate.getMonth() + months) % 12 + 12) % 12;
+  const expectedMonth = (((startDate.getMonth() + months) % 12) + 12) % 12;
   d.setMonth(d.getMonth() + months);
   // Guard day overflow (e.g. March 31st - 1 month = Feb 28th)
   if (d.getMonth() !== expectedMonth) {
@@ -25,7 +26,7 @@ export function addMonths(startDate: Date, months: number): Date {
 export function nextRecurringDate(
   currentDate: Date,
   unit: "days" | "weeks" | "months" | "years",
-  amount: number
+  amount: number,
 ): Date {
   const d = new Date(currentDate.getTime());
   if (unit === "days") {
@@ -43,47 +44,55 @@ export function nextRecurringDate(
 // Generate the whole occurrence sequence list
 export function generateScheduleDates(
   startDateStr: string,
-  frequency: "d" | "w" | "b" | "m" | "y" | "c",
+  frequency: "o" | "d" | "w" | "b" | "m" | "y" | "c",
   customUnit?: "days" | "weeks" | "months" | "years",
   customStep = 1,
-  count = 1
+  count = 1,
 ): string[] {
-  const dates: string[] = [];
-  let current = new Date(startDateStr);
-  if (isNaN(current.getTime())) {
-    current = new Date();
-  }
-
-  // Convert abbreviations to uniform units
-  let unit: "days" | "weeks" | "months" | "years" = "months";
-  let step = 1;
-
-  if (frequency === "d") {
-    unit = "days";
-    step = 1;
-  } else if (frequency === "w") {
-    unit = "weeks";
-    step = 1;
-  } else if (frequency === "b") {
-    unit = "weeks";
-    step = 2;
-  } else if (frequency === "m") {
-    unit = "months";
-    step = 1;
-  } else if (frequency === "y") {
-    unit = "years";
-    step = 1;
-  } else if (frequency === "c" && customUnit) {
-    unit = customUnit;
-    step = customStep;
-  }
-
-  for (let i = 0; i < count; i++) {
-    dates.push(current.toISOString().slice(0, 19).replace("T", " "));
-    current = nextRecurringDate(current, unit, step);
-  }
-
-  return dates;
+  const anchor = new Date(dateOnly(startDateStr) + "T12:00:00Z");
+  if (
+    !Number.isInteger(count) ||
+    count < 1 ||
+    count > 1000 ||
+    !Number.isInteger(customStep) ||
+    customStep < 1 ||
+    customStep > 1000
+  )
+    throw new Error("Invalid recurrence interval or count.");
+  if (frequency === "o") return [dateOnly(startDateStr)];
+  const unit =
+    frequency === "d"
+      ? "days"
+      : frequency === "w" || frequency === "b"
+        ? "weeks"
+        : frequency === "y"
+          ? "years"
+          : frequency === "c"
+            ? customUnit
+            : "months";
+  const step = frequency === "b" ? 2 : frequency === "c" ? customStep : 1;
+  if (!unit) throw new Error("Choose a recurrence interval.");
+  return Array.from({ length: count }, (_, i) => {
+    const date = new Date(anchor);
+    const offset = i * step;
+    if (unit === "days" || unit === "weeks")
+      date.setUTCDate(
+        anchor.getUTCDate() + offset * (unit === "weeks" ? 7 : 1),
+      );
+    else {
+      const month = anchor.getUTCMonth() + offset * (unit === "years" ? 12 : 1);
+      const last = new Date(
+        Date.UTC(anchor.getUTCFullYear(), month + 1, 0),
+      ).getUTCDate();
+      date.setUTCDate(1);
+      date.setUTCFullYear(
+        anchor.getUTCFullYear(),
+        month,
+        Math.min(anchor.getUTCDate(), last),
+      );
+    }
+    return date.toISOString().slice(0, 10);
+  });
 }
 
 // Demo data matching screenshots for instant high-fidelity loading
@@ -96,12 +105,12 @@ export function generateSparklinePoints(
   transactions: Transaction[],
   budget: string,
   width = 200,
-  height = 50
+  height = 50,
 ): string {
   const filtered = transactions
     .filter((t) => t.budget === budget)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  
+
   if (filtered.length < 2) {
     // Return flat line if insufficient historical transactions
     return `M 0 ${height / 2} L ${width} ${height / 2}`;

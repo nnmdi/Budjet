@@ -1,6 +1,13 @@
-import { apiAvailable, apiUrl } from "../api";
 import React, { useState, useEffect } from "react";
-import { AlertTriangle, TrendingUp, Info, ChevronDown, ChevronUp, Sparkles, Check } from "lucide-react";
+import {
+  AlertTriangle,
+  TrendingUp,
+  Info,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Check,
+} from "lucide-react";
 import { Transaction } from "../types";
 
 interface Anomaly {
@@ -37,34 +44,6 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
     let isMounted = true;
     setLoading(true);
 
-    const fetchAnomalies = async () => {
-      try {
-        const res = await fetch(apiUrl("/api/analytics/anomalies"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ transactions }),
-        });
-
-        if (!res.ok) {
-          throw new Error("Backend analytical service responded with an error");
-        }
-
-        const data = await res.json();
-        if (isMounted && data.success) {
-          setAnomalies(data.anomalies || []);
-        }
-      } catch (err) {
-        console.warn("Falling back to local client-side statistical anomaly tracker:", err);
-        if (isMounted) {
-          runLocalAnomalyTracker();
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
     // Backup local calculation if backend is briefly offline/rebounding
     const runLocalAnomalyTracker = () => {
       const today = new Date();
@@ -73,7 +52,12 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
 
       const expenses = transactions.filter((t) => {
         const d = new Date(t.date);
-        return t.type === "expense" && !isNaN(d.getTime()) && d >= cutoff && d <= today;
+        return (
+          t.type === "expense" &&
+          !isNaN(d.getTime()) &&
+          d >= cutoff &&
+          d <= today
+        );
       });
 
       const groupMap: Record<string, Transaction[]> = {};
@@ -90,7 +74,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
 
         if (count < 3) {
           if (count >= 1) {
-            const sorted = groupTx.map((t) => t.amount).sort((a,b) => a - b);
+            const sorted = groupTx.map((t) => t.amount).sort((a, b) => a - b);
             const medianVal = sorted[Math.floor(sorted.length / 2)];
             groupTx.forEach((t) => {
               if (t.amount > medianVal * 3.5 && t.amount > 50) {
@@ -118,9 +102,15 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
 
         const sortedAmounts = [...amounts].sort((a, b) => a - b);
         const mid = Math.floor(count / 2);
-        const median = count % 2 !== 0 ? sortedAmounts[mid] : (sortedAmounts[mid - 1] + sortedAmounts[mid]) / 2;
+        const median =
+          count % 2 !== 0
+            ? sortedAmounts[mid]
+            : (sortedAmounts[mid - 1] + sortedAmounts[mid]) / 2;
 
-        const varianceSum = amounts.reduce((total, val) => total + Math.pow(val - mean, 2), 0);
+        const varianceSum = amounts.reduce(
+          (total, val) => total + Math.pow(val - mean, 2),
+          0,
+        );
         let stdDev = Math.sqrt(varianceSum / (count - 1));
 
         if (stdDev < 0.05 * mean || stdDev === 0) {
@@ -143,22 +133,23 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
               stdDev,
               zScore,
               message: `Your transaction '${t.description}' ($${t.amount}) is ${zScore.toFixed(1)}x higher than your typical average spend of $${mean.toFixed(0)} in '${t.budget}'.`,
-              severity: zScore >= 2.5 ? "critical" : zScore >= 1.8 ? "warning" : "low",
+              severity:
+                zScore >= 2.5 ? "critical" : zScore >= 1.8 ? "warning" : "low",
             });
           }
         });
       });
 
-      localAnomalies.sort((a, b) => new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime());
+      localAnomalies.sort(
+        (a, b) =>
+          new Date(b.transaction.date).getTime() -
+          new Date(a.transaction.date).getTime(),
+      );
       setAnomalies(localAnomalies.slice(0, 15));
     };
 
-    if (apiAvailable) {
-      fetchAnomalies();
-    } else {
-      runLocalAnomalyTracker();
-      setLoading(false);
-    }
+    runLocalAnomalyTracker();
+    setLoading(false);
 
     return () => {
       isMounted = false;
@@ -178,25 +169,35 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
     }
     // Return a neat, quiet diagnostic status showing health state
     return (
-      <div id="anomaly-healthy-banner" className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm text-xs text-slate-300">
+      <div
+        id="anomaly-healthy-banner"
+        className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm text-xs text-slate-300"
+      >
         <div className="p-2 bg-emerald-950/40 text-emerald-400 rounded-xl border border-emerald-900/30 shrink-0">
           <Check className="w-4.5 h-4.5 font-bold" />
         </div>
         <div className="space-y-0.5">
           <p className="font-bold text-white flex items-center gap-1.5 leading-tight">
-            <span>Everything Looks Great</span>
-            <span className="font-mono bg-emerald-950/40 border border-emerald-900/30 text-emerald-400 px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider">HEALTHY</span>
+            <span>Spending alerts</span>
+            <span className="font-mono bg-emerald-950/40 border border-emerald-900/30 text-emerald-400 px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider">
+              LOCAL CHECK
+            </span>
           </p>
           <p className="text-[11px] text-slate-400 leading-normal font-sans">
-            No unexpected spending spikes found in your budget categories. Everything looks normal!
+            No alerts were found. Categories with limited history may not have
+            enough data for a useful check.
           </p>
         </div>
       </div>
     );
   }
 
-  const criticalCount = activeAnomalies.filter((a) => a.severity === "critical").length;
-  const warningCount = activeAnomalies.filter((a) => a.severity === "warning").length;
+  const criticalCount = activeAnomalies.filter(
+    (a) => a.severity === "critical",
+  ).length;
+  const warningCount = activeAnomalies.filter(
+    (a) => a.severity === "warning",
+  ).length;
 
   const handleDismiss = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -204,28 +205,34 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
   };
 
   return (
-    <div 
-      id="anomaly-alerts-container" 
+    <div
+      id="anomaly-alerts-container"
       className={`border rounded-2xl transition-all duration-300 shadow-sm overflow-hidden bg-slate-900 ${
-        criticalCount > 0 
-          ? "border-amber-500/20 shadow-amber-950/10" 
+        criticalCount > 0
+          ? "border-amber-500/20 shadow-amber-950/10"
           : "border-slate-800"
       }`}
     >
       {/* Banner Header */}
-      <div 
+      <div
         onClick={() => setIsExpanded(!isExpanded)}
         className={`p-4 flex items-center justify-between gap-4 cursor-pointer select-none transition-colors ${
-          criticalCount > 0 ? "bg-amber-950/20 hover:bg-amber-950/30" : "bg-slate-950/40 hover:bg-slate-950/60"
+          criticalCount > 0
+            ? "bg-amber-950/20 hover:bg-amber-950/30"
+            : "bg-slate-950/40 hover:bg-slate-950/60"
         }`}
       >
         <div className="flex items-start gap-3.5">
-          <div className={`p-2.5 rounded-xl border shrink-0 mt-0.5 ${
-            criticalCount > 0 
-              ? "bg-amber-950/60 text-amber-400 border-amber-900/40" 
-              : "bg-slate-950 text-slate-400 border-slate-800"
-          }`}>
-            <AlertTriangle className={`w-5 h-5 ${criticalCount > 0 ? "animate-bounce" : ""}`} />
+          <div
+            className={`p-2.5 rounded-xl border shrink-0 mt-0.5 ${
+              criticalCount > 0
+                ? "bg-amber-950/60 text-amber-400 border-amber-900/40"
+                : "bg-slate-950 text-slate-400 border-slate-800"
+            }`}
+          >
+            <AlertTriangle
+              className={`w-5 h-5 ${criticalCount > 0 ? "animate-bounce" : ""}`}
+            />
           </div>
 
           <div className="space-y-1">
@@ -247,19 +254,22 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
               </div>
             </div>
             <p className="text-[11.5px] text-slate-400 font-sans leading-normal">
-              {criticalCount > 0 
+              {criticalCount > 0
                 ? `Alert: You spent way more than usual in some budget boxes.`
-                : `Some minor spending spikes found. Click to see what they are.`
-              }
+                : `Some minor spending spikes found. Click to see what they are.`}
             </p>
           </div>
         </div>
 
-        <button 
+        <button
           type="button"
           className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors cursor-pointer"
         >
-          {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          {isExpanded ? (
+            <ChevronUp className="w-5 h-5" />
+          ) : (
+            <ChevronDown className="w-5 h-5" />
+          )}
         </button>
       </div>
 
@@ -269,9 +279,13 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
           <div className="flex items-start gap-2.5 p-3 bg-indigo-950/20 border border-indigo-900/30 rounded-xl text-[10.5px] text-slate-300 shadow-inner">
             <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
             <div className="space-y-0.5 leading-relaxed font-sans">
-              <p className="font-bold text-white font-sans">How does this work?</p>
+              <p className="font-bold text-white font-sans">
+                How does this work?
+              </p>
               <p className="font-sans text-[11px] text-slate-400">
-                We look at how much you usually spend in each budget box. If you spend a bunch more than usual, we flag it so you can make sure it was on purpose.
+                We look at how much you usually spend in each budget box. If you
+                spend a bunch more than usual, we flag it so you can make sure
+                it was on purpose.
               </p>
             </div>
           </div>
@@ -279,23 +293,38 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
           <div className="divide-y divide-slate-800/60 max-h-[350px] overflow-y-auto pr-1">
             {activeAnomalies.map((anomaly) => {
               const dateObj = new Date(anomaly.transaction.date);
-              const formattedDate = !isNaN(dateObj.getTime()) 
-                ? dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+              const formattedDate = !isNaN(dateObj.getTime())
+                ? dateObj.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
                 : anomaly.transaction.date;
 
               return (
-                <div key={anomaly.id} className="py-3.5 first:pt-0 last:pb-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div
+                  key={anomaly.id}
+                  className="py-3.5 first:pt-0 last:pb-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                >
                   <div className="space-y-1.5 flex-1 pr-4">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[8.5px] px-2 py-0.5 rounded font-black font-mono leading-none tracking-wider ${
-                        anomaly.severity === "critical"
-                          ? "bg-rose-950/40 text-rose-400 border border-rose-900/30"
-                          : "bg-amber-950/40 text-amber-400 border border-amber-900/30"
-                      }`}>
-                        {anomaly.severity === "critical" ? "HUGE SPIKE" : "MINOR SPIKE"}
+                      <span
+                        className={`text-[8.5px] px-2 py-0.5 rounded font-black font-mono leading-none tracking-wider ${
+                          anomaly.severity === "critical"
+                            ? "bg-rose-950/40 text-rose-400 border border-rose-900/30"
+                            : "bg-amber-950/40 text-amber-400 border border-amber-900/30"
+                        }`}
+                      >
+                        {anomaly.severity === "critical"
+                          ? "HUGE SPIKE"
+                          : "MINOR SPIKE"}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">{formattedDate}</span>
-                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest px-1.5 bg-slate-950 rounded text-[9px]">{anomaly.budget}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {formattedDate}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest px-1.5 bg-slate-950 rounded text-[9px]">
+                        {anomaly.budget}
+                      </span>
                     </div>
 
                     <p className="text-xs text-slate-300 font-sans font-medium leading-relaxed">
@@ -306,23 +335,44 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-[8.5px] font-mono text-slate-450">
                         <span>Average: ${anomaly.mean.toFixed(0)}</span>
-                        <span className={anomaly.severity === "critical" ? "text-rose-450 font-bold" : "text-amber-450 font-bold"}>
-                          {anomaly.amount > anomaly.mean ? `Over average by $${(anomaly.amount - anomaly.mean).toFixed(0)}` : "Spike"}
+                        <span
+                          className={
+                            anomaly.severity === "critical"
+                              ? "text-rose-450 font-bold"
+                              : "text-amber-450 font-bold"
+                          }
+                        >
+                          {anomaly.amount > anomaly.mean
+                            ? `Over average by $${(anomaly.amount - anomaly.mean).toFixed(0)}`
+                            : "Spike"}
                         </span>
                       </div>
-                      
+
                       <div className="h-1.5 bg-slate-950 rounded-full overflow-hidden relative border border-slate-850">
                         {/* Background ticks */}
-                        <div className="absolute left-[30%] top-0 bottom-0 w-0.5 bg-slate-800" title="Minor variance"></div>
-                        <div className="absolute left-[50%] top-0 bottom-0 w-0.5 bg-slate-800" title="Moderate deviation"></div>
-                        <div className="absolute left-[75%] top-0 bottom-0 w-0.5 bg-slate-800" title="Significant spike"></div>
+                        <div
+                          className="absolute left-[30%] top-0 bottom-0 w-0.5 bg-slate-800"
+                          title="Minor variance"
+                        ></div>
+                        <div
+                          className="absolute left-[50%] top-0 bottom-0 w-0.5 bg-slate-800"
+                          title="Moderate deviation"
+                        ></div>
+                        <div
+                          className="absolute left-[75%] top-0 bottom-0 w-0.5 bg-slate-800"
+                          title="Significant spike"
+                        ></div>
 
                         {/* Fill line */}
-                        <div 
+                        <div
                           className={`h-full rounded-full transition-all duration-500 ${
-                            anomaly.severity === "critical" ? "bg-rose-500" : "bg-amber-500"
+                            anomaly.severity === "critical"
+                              ? "bg-rose-500"
+                              : "bg-amber-500"
                           }`}
-                          style={{ width: `${Math.min(100, (anomaly.zScore / 3.5) * 100)}%` }}
+                          style={{
+                            width: `${Math.min(100, (anomaly.zScore / 3.5) * 100)}%`,
+                          }}
                         ></div>
                       </div>
                     </div>
@@ -330,7 +380,9 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
 
                   <div className="flex items-center gap-2">
                     <div className="text-right whitespace-nowrap">
-                      <p className="text-xs font-black text-white font-mono">${anomaly.amount.toFixed(2)}</p>
+                      <p className="text-xs font-black text-white font-mono">
+                        ${anomaly.amount.toFixed(2)}
+                      </p>
                       <p className="text-[9px] text-slate-400">Amount</p>
                     </div>
 
@@ -351,4 +403,3 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
     </div>
   );
 }
-

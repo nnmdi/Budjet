@@ -287,36 +287,8 @@ class NaiveBayesClassifier {
       this.train(sample.text, sample.category, false);
     });
 
-    // 2. Read dynamic modifications saved locally
-    try {
-      const stored = localStorage.getItem("budjet_dynamic_ml_data");
-      if (stored) {
-        const list: { text: string; category: string }[] = JSON.parse(stored);
-        list.forEach(item => {
-          this.train(item.text, item.category, false);
-        });
-        console.log(`ML pipeline successfully loaded & trained on ${list.length} dynamic user inputs!`);
-      }
-    } catch (e) {
-      console.warn("Unable to restore dynamic user model offsets:", e);
-    }
   }
-
-  // Save dynamically as user commits changes to their real-time ledger
-  private saveDynamicUserTrainData(text: string, category: string): void {
-    try {
-      const stored = localStorage.getItem("budjet_dynamic_ml_data");
-      const list: { text: string; category: string }[] = stored ? JSON.parse(stored) : [];
-      list.push({ text, category });
-      
-      // Bound the memory buffer to last 200 inputs to keep storage small and swift
-      if (list.length > 200) list.shift();
-
-      localStorage.setItem("budjet_dynamic_ml_data", JSON.stringify(list));
-    } catch (e) {
-      console.warn("Could not save dynamic user training context:", e);
-    }
-  }
+  private saveDynamicUserTrainData(_text:string,_category:string):void {}
 }
 
 // Export Singleton classifier object

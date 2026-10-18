@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Private runtime data and backups
+data/
+rooms_db.json
+*.sqlite
+*.sqlite-*
+backups/

@@ -1,4 +1,6 @@
 export interface Budget {
+  id?: string;
+  openingBalanceCents?: number;
   name: string;
   balance: number;
   created: string;
@@ -9,11 +11,14 @@ export interface Transaction {
   id: string;
   budget: string; // Budget name, as in Python CLI
   date: string; // YYYY-MM-DD HH:MM:SS or ISO format
-  type: 'profit' | 'expense';
+  type: "profit" | "expense";
   amount: number;
   description: string;
   recurrence: string;
   synced?: boolean;
+  budgetId?: string;
+  status?: "posted" | "scheduled";
+  importKey?: string;
 }
 
 export interface ActivityLog {
@@ -26,7 +31,14 @@ export interface ActivityLog {
 
 export interface SyncAction {
   id: string;
-  type: 'create_budget' | 'delete_budget' | 'add_transaction' | 'delete_transactions' | 'rename_budget' | 'reset_balance' | 'update_budget_goal';
+  type:
+    | "create_budget"
+    | "delete_budget"
+    | "add_transaction"
+    | "delete_transactions"
+    | "rename_budget"
+    | "reset_balance"
+    | "update_budget_goal";
   payload: any;
   timestamp: number;
   clientId: string;
@@ -52,18 +64,26 @@ export interface Collaborator {
 
 export interface HypotheticalEntry {
   id: string;
-  type: 'profit' | 'expense';
+  type: "profit" | "expense";
   amount: number;
   description: string;
-  frequency: 'd' | 'w' | 'b' | 'm' | 'y' | 'c';
-  customUnit?: 'days' | 'weeks' | 'months' | 'years';
+  frequency: "o" | "d" | "w" | "b" | "m" | "y" | "c";
+  customUnit?: "days" | "weeks" | "months" | "years";
   customStep?: number;
   count: number;
   startDate: string;
 }
 
 export interface UndoStep {
-  type: 'create_budget' | 'delete_budget' | 'add_transaction' | 'add_recurring' | 'erase_transactions' | 'rename_budget' | 'reset_balance' | 'update_budget_goal';
+  type:
+    | "create_budget"
+    | "delete_budget"
+    | "add_transaction"
+    | "add_recurring"
+    | "erase_transactions"
+    | "rename_budget"
+    | "reset_balance"
+    | "update_budget_goal";
   data: any;
   timestamp: number;
 }

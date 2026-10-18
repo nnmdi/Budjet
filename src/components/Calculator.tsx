@@ -44,7 +44,7 @@ export default function Calculator({ budgets }: CalculatorProps) {
   const [formType, setFormType] = useState<"profit" | "expense">("expense");
   const [formAmount, setFormAmount] = useState("");
   const [formDesc, setFormDesc] = useState("");
-  const [formFreq, setFormFreq] = useState<"d" | "w" | "b" | "m" | "y" | "c">("o");
+  const [formFreq, setFormFreq] = useState<"o" | "d" | "w" | "b" | "m" | "y" | "c">("o");
   const [customUnit, setCustomUnit] = useState<"days" | "weeks" | "months" | "years">("months");
   const [customStep, setCustomStep] = useState("1");
   const [formCount, setFormCount] = useState("1");

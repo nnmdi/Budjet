@@ -1,19 +1,23 @@
 import React, { useState } from "react";
-import { Sparkles, Calendar, Receipt, CreditCard, Plus, Trash2, X, Check } from "lucide-react";
+import {
+  Sparkles,
+  Calendar,
+  Receipt,
+  CreditCard,
+  Plus,
+  Trash2,
+  X,
+  Check,
+} from "lucide-react";
 import { formatCurrency } from "../utils";
 
-export interface RecurringBill {
-  id: string;
-  name: string;
-  amount: number;
-  frequency: string;
-  type: "expense" | "profit";
-  icon: "subscription" | "rent" | "salary";
-  dueDate?: string; // YYYY-MM-DD
-}
+import { Bill, nextDueDate, todayIn } from "../domain/ledger";
+export type RecurringBill = Bill;
 
 interface DueTodayProps {
   bills: RecurringBill[];
+  budgetNames: string[];
+  onAssignBudget: (id: string, budget: string) => void;
   onPayBill: (bill: RecurringBill) => void;
   paidIds: string[];
   onAddBill: (bill: RecurringBill) => void;
@@ -21,40 +25,7 @@ interface DueTodayProps {
 }
 
 // Utility to calculate subsequent date matching standard frequency options
-export function getNextDueDate(currentDueDateStr: string, frequency: string): string {
-  const date = new Date(currentDueDateStr + "T12:00:00");
-  if (isNaN(date.getTime())) {
-    const fallback = new Date();
-    fallback.setMonth(fallback.getMonth() + 1);
-    return fallback.toISOString().slice(0, 10);
-  }
-
-  const freqClean = frequency.toLowerCase().trim();
-
-  if (freqClean.includes("daily") || freqClean === "d") {
-    date.setDate(date.getDate() + 1);
-  } else if (freqClean.includes("weekly") || freqClean === "w") {
-    if (freqClean.includes("bi") || freqClean.includes("2")) {
-      date.setDate(date.getDate() + 14);
-    } else {
-      date.setDate(date.getDate() + 7);
-    }
-  } else if (freqClean.includes("bi-weekly") || freqClean.includes("biweekly")) {
-    date.setDate(date.getDate() + 14);
-  } else if (freqClean.includes("monthly") || freqClean === "m") {
-    date.setMonth(date.getMonth() + 1);
-  } else if (freqClean.includes("yearly") || freqClean === "y") {
-    date.setFullYear(date.getFullYear() + 1);
-  } else {
-    // defaults to monthly increment
-    date.setMonth(date.getMonth() + 1);
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+export const getNextDueDate = nextDueDate;
 
 // Format date nicely (e.g., Jun 16, 2026)
 export function formatReadableDate(dateStr: string): string {
@@ -62,22 +33,48 @@ export function formatReadableDate(dateStr: string): string {
   const parts = dateStr.split("-");
   if (parts.length !== 3) return dateStr;
   const [year, month, day] = parts;
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const mIdx = parseInt(month, 10) - 1;
   const monthName = months[mIdx] || month;
   return `${monthName} ${parseInt(day, 10)}, ${year}`;
 }
 
-export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDeleteBill }: DueTodayProps) {
+export default function DueToday({
+  onAssignBudget,
+  budgetNames,
+  bills,
+  onPayBill,
+  paidIds,
+  onAddBill,
+  onDeleteBill,
+}: DueTodayProps) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [budget, setBudget] = useState("");
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"expense" | "profit">("expense");
   const [frequency, setFrequency] = useState("Monthly");
-  const [iconType, setIconType] = useState<"subscription" | "rent" | "salary">("subscription");
-  const [dueDate, setDueDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [iconType, setIconType] = useState<"subscription" | "rent" | "salary">(
+    "subscription",
+  );
+  const [dueDate, setDueDate] = useState(() =>
+    todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone),
+  );
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
   // Split bills into Due/Overdue vs Upcoming
   const dueBills = bills.filter((bill) => {
@@ -92,11 +89,19 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !amount) return;
+    if (
+      !name.trim() ||
+      !Number.isFinite(Number(amount)) ||
+      Number(amount) <= 0 ||
+      !budget
+    )
+      return;
 
     const newBill: RecurringBill = {
-      id: "bill-" + Math.random().toString(36).substring(2, 9),
+      id: "bill-" + crypto.randomUUID(),
       name: name.trim(),
+      budget,
+      anchorDate: dueDate || todayStr,
       amount: parseFloat(amount),
       frequency,
       type,
@@ -107,12 +112,15 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
     onAddBill(newBill);
     setName("");
     setAmount("");
-    setDueDate(new Date().toISOString().slice(0, 10));
+    setDueDate(todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone));
     setShowAddForm(false);
   };
 
   return (
-    <div id="due-today-panel" className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5">
+    <div
+      id="due-today-panel"
+      className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5"
+    >
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-sm font-bold text-white tracking-tight flex items-center gap-2 font-sans">
           <Calendar className="w-4.5 h-4.5 text-rose-400 font-sans" />
@@ -124,7 +132,11 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
             onClick={() => setShowAddForm(!showAddForm)}
             className="p-1 px-2.5 bg-rose-700 hover:bg-rose-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer font-sans"
           >
-            {showAddForm ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+            {showAddForm ? (
+              <X className="w-3 h-3" />
+            ) : (
+              <Plus className="w-3 h-3" />
+            )}
             <span>Add Bill / Income</span>
           </button>
           {dueBills.length > 0 ? (
@@ -139,12 +151,54 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
         </div>
       </div>
 
+      {bills
+        .filter((b) => !b.budget)
+        .map((b) => (
+          <label key={b.id} className="block text-xs text-amber-200 mb-3">
+            Choose funding for {b.name}
+            <select
+              value=""
+              onChange={(e) => onAssignBudget(b.id, e.target.value)}
+              className="block bg-slate-950 p-2 mt-1 rounded"
+            >
+              <option value="">Choose a budget</option>
+              {budgetNames.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
       {showAddForm && (
-        <form onSubmit={handleSubmit} className="mb-4 p-4 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3 animate-fade-in font-sans">
-          <div className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1 font-sans">Add a repeating bill or pay</div>
+        <form
+          onSubmit={handleSubmit}
+          className="mb-4 p-4 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3 animate-fade-in font-sans"
+        >
+          <div className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1 font-sans">
+            Add a repeating bill or pay
+          </div>
           <div className="space-y-2">
+            <label className="block text-xs text-slate-300">
+              Funding budget
+              <select
+                required
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                className="block w-full bg-slate-900 p-2 rounded"
+              >
+                <option value="">Choose a budget</option>
+                {budgetNames.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div>
-              <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">What is this for?</label>
+              <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">
+                What is this for?
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Amazon Prime"
@@ -156,7 +210,9 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">How much ($)</label>
+                <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">
+                  How much ($)
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -168,7 +224,9 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
                 />
               </div>
               <div>
-                <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">When is it due?</label>
+                <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">
+                  When is it due?
+                </label>
                 <input
                   type="date"
                   value={dueDate}
@@ -180,7 +238,9 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">How often does it repeat?</label>
+                <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">
+                  How often does it repeat?
+                </label>
                 <select
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value)}
@@ -194,10 +254,14 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
                 </select>
               </div>
               <div>
-                <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">Is it money in or money out?</label>
+                <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">
+                  Is it money in or money out?
+                </label>
                 <select
                   value={type}
-                  onChange={(e) => setType(e.target.value as "expense" | "profit")}
+                  onChange={(e) =>
+                    setType(e.target.value as "expense" | "profit")
+                  }
                   className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white cursor-pointer outline-none focus:border-rose-500 font-sans"
                 >
                   <option value="expense">Money out (You pay)</option>
@@ -206,10 +270,16 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
               </div>
             </div>
             <div>
-              <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">Pick an icon</label>
+              <label className="text-[9px] font-bold text-slate-400 block mb-0.5 font-sans">
+                Pick an icon
+              </label>
               <select
                 value={iconType}
-                onChange={(e) => setIconType(e.target.value as "subscription" | "rent" | "salary")}
+                onChange={(e) =>
+                  setIconType(
+                    e.target.value as "subscription" | "rent" | "salary",
+                  )
+                }
                 className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white cursor-pointer outline-none focus:border-rose-500 font-sans"
               >
                 <option value="subscription">Regular Bill</option>
@@ -232,7 +302,9 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
         <div>
           <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2 flex items-center justify-between font-sans">
             <span>Due now ({dueBills.length})</span>
-            {dueBills.length > 0 && <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-ping" />}
+            {dueBills.length > 0 && (
+              <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-ping" />
+            )}
           </div>
           <div className="space-y-2">
             {dueBills.map((bill) => {
@@ -252,11 +324,13 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
               }
 
               return (
-                <div 
-                   key={bill.id} 
+                <div
+                  key={bill.id}
                   className="flex items-center justify-between gap-3 p-3 bg-slate-950/40 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden transition-all duration-300 font-sans"
                 >
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isIncome ? "bg-emerald-500" : "bg-rose-500"}`} />
+                  <div
+                    className={`absolute left-0 top-0 bottom-0 w-1 ${isIncome ? "bg-emerald-500" : "bg-rose-500"}`}
+                  />
 
                   <div className="flex items-center gap-3 pl-1.5 min-w-0 flex-1">
                     <div className={`p-2 rounded-lg border ${iconBg} shrink-0`}>
@@ -264,15 +338,30 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-bold text-white truncate font-sans">{bill.name}</p>
+                        <p className="text-xs font-bold text-white truncate font-sans">
+                          {bill.name}
+                        </p>
                         {isOverdue ? (
-                          <span className="text-[8px] font-extrabold text-rose-400 bg-rose-500/15 px-1 py-[1px] rounded tracking-wide uppercase font-sans">Overdue</span>
+                          <span className="text-[8px] font-extrabold text-rose-400 bg-rose-500/15 px-1 py-[1px] rounded tracking-wide uppercase font-sans">
+                            Overdue
+                          </span>
                         ) : (
-                          <span className="text-[8px] font-extrabold text-amber-400 bg-amber-500/15 px-1 py-[1px] rounded tracking-wide uppercase font-sans">Today</span>
+                          <span className="text-[8px] font-extrabold text-amber-400 bg-amber-500/15 px-1 py-[1px] rounded tracking-wide uppercase font-sans">
+                            Today
+                          </span>
                         )}
                       </div>
                       <p className="text-[10px] text-slate-400 font-sans mt-0.5 font-medium">
-                        {formatCurrency(bill.amount)} • {bill.frequency} • <span className={isOverdue ? "text-rose-400 font-semibold" : "text-slate-400"}>Due: {formatReadableDate(billDate)}</span>
+                        {formatCurrency(bill.amount)} • {bill.frequency} •{" "}
+                        <span
+                          className={
+                            isOverdue
+                              ? "text-rose-400 font-semibold"
+                              : "text-slate-400"
+                          }
+                        >
+                          Due: {formatReadableDate(billDate)}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -282,12 +371,14 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
                       type="button"
                       onClick={() => onPayBill(bill)}
                       className={`text-[9.5px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 cursor-pointer px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all shrink-0 font-sans ${
-                        isIncome ? "text-emerald-400 hover:border-emerald-500/50" : "text-rose-400 hover:border-rose-500/50"
+                        isIncome
+                          ? "text-emerald-400 hover:border-emerald-500/50"
+                          : "text-rose-400 hover:border-rose-500/50"
                       }`}
                     >
                       {isIncome ? "GET PAID" : "PAY BILL"}
                     </button>
-                    
+
                     <button
                       type="button"
                       onClick={() => onDeleteBill(bill.id)}
@@ -319,35 +410,48 @@ export default function DueToday({ bills, onPayBill, paidIds, onAddBill, onDelet
                 const isIncome = bill.type === "profit";
                 const billDate = bill.dueDate || todayStr;
 
-                let icon = <CreditCard className="w-4 h-4 text-slate-400 font-sans" />;
+                let icon = (
+                  <CreditCard className="w-4 h-4 text-slate-400 font-sans" />
+                );
                 let iconBg = "bg-slate-800/40 border-slate-800";
 
                 if (bill.icon === "rent") {
-                  icon = <Receipt className="w-4 h-4 text-slate-400 font-sans" />;
+                  icon = (
+                    <Receipt className="w-4 h-4 text-slate-400 font-sans" />
+                  );
                 } else if (bill.icon === "salary") {
-                  icon = <Sparkles className="w-4 h-4 text-emerald-500/70 font-sans" />;
+                  icon = (
+                    <Sparkles className="w-4 h-4 text-emerald-500/70 font-sans" />
+                  );
                   iconBg = "bg-emerald-500/5 border-emerald-500/10";
                 }
 
                 return (
-                  <div 
-                    key={bill.id} 
+                  <div
+                    key={bill.id}
                     className="flex items-center justify-between gap-3 p-2 bg-slate-950/25 rounded-lg border border-slate-850/60 shadow-sm relative overflow-hidden opacity-75 hover:opacity-100 transition-opacity font-sans"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1 pl-1">
-                      <div className={`p-1.5 rounded-md border ${iconBg} shrink-0`}>
+                      <div
+                        className={`p-1.5 rounded-md border ${iconBg} shrink-0`}
+                      >
                         {icon}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-semibold text-slate-300 truncate font-sans">{bill.name}</p>
+                          <p className="text-xs font-semibold text-slate-300 truncate font-sans">
+                            {bill.name}
+                          </p>
                           <span className="text-[7.5px] font-bold text-emerald-400 bg-emerald-500/10 px-1 py-[0.5px] rounded border border-emerald-500/20 flex items-center gap-0.5 font-sans">
                             <Check className="w-2 h-2" />
                             <span>All Set</span>
                           </span>
                         </div>
                         <p className="text-[9.5px] text-slate-500 font-sans mt-0.5">
-                          {formatCurrency(bill.amount)} • {bill.frequency} • <span className="text-slate-400 font-medium font-sans">Next: {formatReadableDate(billDate)}</span>
+                          {formatCurrency(bill.amount)} • {bill.frequency} •{" "}
+                          <span className="text-slate-400 font-medium font-sans">
+                            Next: {formatReadableDate(billDate)}
+                          </span>
                         </p>
                       </div>
                     </div>

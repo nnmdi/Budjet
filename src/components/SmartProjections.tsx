@@ -1,16 +1,16 @@
 import { useState, useMemo } from "react";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Sparkles, 
-  Info, 
-  Sliders, 
-  Clock, 
-  ShieldCheck, 
-  HelpCircle, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Sparkles,
+  Info,
+  Sliders,
+  Clock,
+  ShieldCheck,
+  HelpCircle,
   RefreshCw,
   Wallet,
-  ArrowRightLeft
+  ArrowRightLeft,
 } from "lucide-react";
 import { Transaction, Budget } from "../types";
 import { RecurringBill } from "./DueToday";
@@ -22,7 +22,11 @@ interface SmartProjectionsProps {
   dueBills?: RecurringBill[];
 }
 
-export default function SmartProjections({ budgets, transactions, dueBills = [] }: SmartProjectionsProps) {
+export default function SmartProjections({
+  budgets,
+  transactions,
+  dueBills = [],
+}: SmartProjectionsProps) {
   // Configurable sliders state
   const [forecastHorizon, setForecastHorizon] = useState<number>(90); // 30, 60, 90, 120 days
   const [confidenceLevel, setConfidenceLevel] = useState<number>(0.95); // 0.80, 0.90, 0.95
@@ -40,8 +44,8 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
   // Z-score mapping for standard deviations
   const zScore = useMemo(() => {
-    if (confidenceLevel === 0.80) return 1.282;
-    if (confidenceLevel === 0.90) return 1.645;
+    if (confidenceLevel === 0.8) return 1.282;
+    if (confidenceLevel === 0.9) return 1.645;
     return 1.96; // 95%
   }, [confidenceLevel]);
 
@@ -53,14 +57,14 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
   // Compute 6-month historical daily net worth series
   const predictionEngine = useMemo(() => {
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
     // Filter transactions to the last 180 days (6 months)
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 180);
 
     const validTx = transactions
-      .filter(t => {
+      .filter((t) => {
         const d = new Date(t.date);
         return !isNaN(d.getTime()) && d >= cutoffDate && d <= today;
       })
@@ -69,10 +73,15 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
     // Compute past daily networth by starting from current totalLiquidity and walking backwards
     const dailyBalancesMap: Record<string, number> = {};
     let runningBalance = totalLiquidity;
-    
+
     // Create base series of past 180 days
-    const pastDays: { dateStr: string; timestamp: number; balance: number; isSynthesized?: boolean }[] = [];
-    
+    const pastDays: {
+      dateStr: string;
+      timestamp: number;
+      balance: number;
+      isSynthesized?: boolean;
+    }[] = [];
+
     for (let i = 0; i < 180; i++) {
       const d = new Date(today.getTime());
       d.setDate(d.getDate() - i);
@@ -83,12 +92,14 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
     // Apply actual transaction differences in reverse
     // (An expense made today substracted from past balance means past balance was HIGHER than today.
     //  A profit made today subtracted means past balance was LOWER.)
-    const sortedReverseTx = [...validTx].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
+    const sortedReverseTx = [...validTx].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+
     let currentWalkBalance = totalLiquidity;
-    const sortedTxKeys = sortedReverseTx.map(t => ({
+    const sortedTxKeys = sortedReverseTx.map((t) => ({
       dateKey: new Date(t.date).toISOString().slice(0, 10),
-      netAmount: t.type === "profit" ? t.amount : -t.amount
+      netAmount: t.type === "profit" ? t.amount : -t.amount,
     }));
 
     // Populate daily history map
@@ -96,50 +107,39 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
       const targetDate = new Date(today.getTime());
       targetDate.setDate(targetDate.getDate() - i);
       const targetKey = targetDate.toISOString().slice(0, 10);
-      
+
       // Subtract all transactions that occurred strictly after this targetDate
       const laterTxSum = sortedTxKeys
-        .filter(tx => tx.dateKey > targetKey)
+        .filter((tx) => tx.dateKey > targetKey)
         .reduce((sum, tx) => sum + tx.netAmount, 0);
-      
-      dailyBalancesMap[targetKey] = Math.max(0, totalLiquidity - laterTxSum);
+
+      dailyBalancesMap[targetKey] = totalLiquidity - laterTxSum;
     }
 
     // Convert map to sequential array
     for (let i = 179; i >= 0; i--) {
       const d = new Date(today.getTime());
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0,10);
+      const key = d.toISOString().slice(0, 10);
       pastDays.push({
         dateStr: key,
         timestamp: d.getTime(),
-        balance: dailyBalancesMap[key]
+        balance: dailyBalancesMap[key],
       });
     }
 
-    // If transactions are low (e.g. fresh workspace with brand new mock), 
-    // inject moderate random-walk trending data to simulate realistic asset momentum 
-    // and demonstrate enterprise predictive abilities gracefully in real-time.
+    // Sparse history stays flat instead of fabricating account activity.
     const hasEnoughData = validTx.length >= 5;
-    if (!hasEnoughData) {
-      let mockBalance = totalLiquidity > 500 ? totalLiquidity : 12500;
-      // Start 180 days ago with roughly 85% of current value and add noise + growth
-      for (let i = 0; i < 180; i++) {
-        const index = 179 - i;
-        const ratio = (180 - i) / 180; // goes from 0 to 1
-        const trendFactor = (totalLiquidity * 0.15) * ratio; // 15% overall progression
-        const noise = Math.sin(i / 10) * (totalLiquidity * 0.03) + Math.cos(i / 4) * (totalLiquidity * 0.015);
-        pastDays[index].balance = Math.max(100, Math.round(totalLiquidity - trendFactor + noise));
-        pastDays[index].isSynthesized = true;
-      }
-    }
 
     // --- LEAST SQUARES LINEAR REGRESSION FORECASTING ---
     // x = day index from 0 to 179
     // y = balance
     const N = pastDays.length;
-    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    
+    let sumX = 0,
+      sumY = 0,
+      sumXY = 0,
+      sumXX = 0;
+
     for (let i = 0; i < N; i++) {
       sumX += i;
       sumY += pastDays[i].balance;
@@ -155,44 +155,60 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
     // Calculate residuals variance (historical volatility deviation)
     let residualSumSquares = 0;
     const dailyChanges: number[] = [];
-    
+
     for (let i = 0; i < N; i++) {
       const predicted = slope * i + intercept;
       residualSumSquares += Math.pow(pastDays[i].balance - predicted, 2);
-      
+
       if (i > 0) {
-        dailyChanges.push(pastDays[i].balance - pastDays[i-1].balance);
+        dailyChanges.push(pastDays[i].balance - pastDays[i - 1].balance);
       }
     }
 
     // Residual standard error
-    const standardErrorOfRegression = Math.sqrt(residualSumSquares / (N - 2)) || (totalLiquidity * 0.05);
+    const standardErrorOfRegression =
+      Math.sqrt(residualSumSquares / (N - 2)) || totalLiquidity * 0.05;
 
     // Calculate daily volatility based on differences
-    const meanDiff = dailyChanges.reduce((a, b) => a + b, 0) / dailyChanges.length || 0;
-    const varianceDiff = dailyChanges.reduce((sum, val) => sum + Math.pow(val - meanDiff, 2), 0) / dailyChanges.length || 100;
+    const meanDiff =
+      dailyChanges.reduce((a, b) => a + b, 0) / dailyChanges.length || 0;
+    const varianceDiff =
+      dailyChanges.reduce((sum, val) => sum + Math.pow(val - meanDiff, 2), 0) /
+        dailyChanges.length || 100;
     const dailyVolatility = Math.sqrt(varianceDiff);
 
     // Inject custom simulation offset slope values: simulationStress is monthly savings boost/drain
     const dailyStressOffset = simulationStress / 30;
 
     // Inject upcoming due bills impact if toggled (expenses subtract, profits add)
-    const billsExpenseTotal = includeBills 
-      ? dueBills.filter(b => b.type === "expense").reduce((sum, b) => sum + b.amount, 0)
+    const billsExpenseTotal = includeBills
+      ? dueBills
+          .filter((b) => b.type === "expense")
+          .reduce((sum, b) => sum + b.amount, 0)
       : 0;
 
-    const billsIncomeTotal = includeBills 
-      ? dueBills.filter(b => b.type === "profit").reduce((sum, b) => sum + b.amount, 0)
+    const billsIncomeTotal = includeBills
+      ? dueBills
+          .filter((b) => b.type === "profit")
+          .reduce((sum, b) => sum + b.amount, 0)
       : 0;
 
     const netBillsOutflow = billsExpenseTotal - billsIncomeTotal;
     const billsDailyOutflowFactor = netBillsOutflow / 30;
 
     // Combine original regression trend slope with stress multiplier adjustments & bills overhead
-    const adjustedDailySlope = slope + dailyStressOffset - billsDailyOutflowFactor;
+    const adjustedDailySlope =
+      (hasEnoughData ? slope : 0) + dailyStressOffset - billsDailyOutflowFactor;
 
     // --- GENERATE 90-DAY FUTURE FORECAST SERIES ---
-    const futureDays: { dateStr: string; timestamp: number; balance: number; upper: number; lower: number; isProjected: boolean }[] = [];
+    const futureDays: {
+      dateStr: string;
+      timestamp: number;
+      balance: number;
+      upper: number;
+      lower: number;
+      isProjected: boolean;
+    }[] = [];
     const lastDayVal = pastDays[N - 1].balance;
 
     for (let t = 1; t <= forecastHorizon; t++) {
@@ -200,7 +216,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
       fDate.setDate(fDate.getDate() + t);
 
       // Trend projection (linear drift from last active historical balance)
-      const projectedBalance = Math.max(0, lastDayVal + (adjustedDailySlope * t));
+      const projectedBalance = lastDayVal + adjustedDailySlope * t;
 
       // Uncertainty expansion: uncertainty scales with √t (Standard Wiener / Brown motion expansion)
       // Standard deviation of error at ahead t step = standardErrorOfRegression * sqrt(t) / sqrt(180) or similar
@@ -212,8 +228,8 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
         timestamp: fDate.getTime(),
         balance: Math.round(projectedBalance),
         upper: Math.round(projectedBalance + bufferSpread),
-        lower: Math.round(Math.max(0, projectedBalance - bufferSpread)),
-        isProjected: true
+        lower: Math.round(projectedBalance - bufferSpread),
+        isProjected: true,
       });
     }
 
@@ -230,10 +246,20 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
         hasEnoughData,
         actualCount: validTx.length,
         dueBillsDeducted: billsExpenseTotal,
-        dueBillsAdded: billsIncomeTotal
-      }
+        dueBillsAdded: billsIncomeTotal,
+      },
     };
-  }, [budgets, transactions, dueBills, forecastHorizon, confidenceLevel, simulationStress, includeBills, zScore, totalLiquidity]);
+  }, [
+    budgets,
+    transactions,
+    dueBills,
+    forecastHorizon,
+    confidenceLevel,
+    simulationStress,
+    includeBills,
+    zScore,
+    totalLiquidity,
+  ]);
 
   const { history, forecast, metrics } = predictionEngine;
 
@@ -242,16 +268,21 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
     // Collect last 60 days of history and all forecast days for high readability
     const recentHistory = history.slice(-60);
     return [
-      ...recentHistory.map(h => ({ ...h, upper: h.balance, lower: h.balance, isProjected: false })),
-      ...forecast
+      ...recentHistory.map((h) => ({
+        ...h,
+        upper: h.balance,
+        lower: h.balance,
+        isProjected: false,
+      })),
+      ...forecast,
     ];
   }, [history, forecast]);
 
   const chartBounds = useMemo(() => {
-    const vals = mergedSeries.flatMap(d => [d.balance, d.upper, d.lower]);
+    const vals = mergedSeries.flatMap((d) => [d.balance, d.upper, d.lower]);
     const maxVal = Math.max(...vals, 1000) * 1.05;
-    const minVal = Math.max(0, Math.min(...vals, 100) * 0.95);
-    return { min: minVal, max: maxVal, range: (maxVal - minVal) || 1 };
+    const minVal = Math.min(...vals, 0) - 50;
+    return { min: minVal, max: maxVal, range: maxVal - minVal || 1 };
   }, [mergedSeries]);
 
   const svgCoordinates = useMemo(() => {
@@ -267,16 +298,25 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
     const points = mergedSeries.map((item, idx) => {
       const x = paddingLeft + (idx / (mergedSeries.length - 1)) * usableWidth;
-      const y = paddingTop + usableHeight - ((item.balance - chartBounds.min) / chartBounds.range) * usableHeight;
-      const yUpper = paddingTop + usableHeight - ((item.upper - chartBounds.min) / chartBounds.range) * usableHeight;
-      const yLower = paddingTop + usableHeight - ((item.lower - chartBounds.min) / chartBounds.range) * usableHeight;
-      
+      const y =
+        paddingTop +
+        usableHeight -
+        ((item.balance - chartBounds.min) / chartBounds.range) * usableHeight;
+      const yUpper =
+        paddingTop +
+        usableHeight -
+        ((item.upper - chartBounds.min) / chartBounds.range) * usableHeight;
+      const yLower =
+        paddingTop +
+        usableHeight -
+        ((item.lower - chartBounds.min) / chartBounds.range) * usableHeight;
+
       return {
         x,
         y: isNaN(y) ? 0 : y,
         yUpper: isNaN(yUpper) ? 0 : yUpper,
         yLower: isNaN(yLower) ? 0 : yLower,
-        ...item
+        ...item,
       };
     });
 
@@ -289,35 +329,51 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
       paddingTop,
       paddingBottom,
       usableWidth,
-      usableHeight
+      usableHeight,
     };
   }, [mergedSeries, chartBounds]);
 
-  const { points, width, height, paddingLeft, paddingTop, usableWidth, usableHeight } = svgCoordinates;
+  const {
+    points,
+    width,
+    height,
+    paddingLeft,
+    paddingTop,
+    usableWidth,
+    usableHeight,
+  } = svgCoordinates;
 
   // SVG Render paths
-  const historicalPathPoints = points.filter(p => !p.isProjected);
-  const projectedPathPoints = points.filter(p => p.isProjected || p.dateStr === history[history.length - 1].dateStr);
+  const historicalPathPoints = points.filter((p) => !p.isProjected);
+  const projectedPathPoints = points.filter(
+    (p) => p.isProjected || p.dateStr === history[history.length - 1].dateStr,
+  );
 
-  const historicalDPath = historicalPathPoints.length > 0 
-    ? `M ${historicalPathPoints.map(p => `${p.x},${p.y}`).join(" L ")}`
-    : "";
+  const historicalDPath =
+    historicalPathPoints.length > 0
+      ? `M ${historicalPathPoints.map((p) => `${p.x},${p.y}`).join(" L ")}`
+      : "";
 
-  const projectedDPath = projectedPathPoints.length > 0
-    ? `M ${projectedPathPoints.map(p => `${p.x},${p.y}`).join(" L ")}`
-    : "";
+  const projectedDPath =
+    projectedPathPoints.length > 0
+      ? `M ${projectedPathPoints.map((p) => `${p.x},${p.y}`).join(" L ")}`
+      : "";
 
   // Shaded variance element polygon polygon points
-  const projectedAreaPoints = points.filter(p => p.isProjected);
+  const projectedAreaPoints = points.filter((p) => p.isProjected);
   const variancePolygonDPath = useMemo(() => {
     if (projectedAreaPoints.length === 0) return "";
-    
-    const upperLine = projectedAreaPoints.map(p => `${p.x},${p.yUpper}`);
+
+    const upperLine = projectedAreaPoints.map((p) => `${p.x},${p.yUpper}`);
     // Go backwards on the lower line to form a solid connected polygon loop
-    const lowerLine = [...projectedAreaPoints].reverse().map(p => `${p.x},${p.yLower}`);
-    
+    const lowerLine = [...projectedAreaPoints]
+      .reverse()
+      .map((p) => `${p.x},${p.yLower}`);
+
     // Connect historical junction point to prevent gap at the start of forecast
-    const junction = points.find(p => p.dateStr === history[history.length - 1].dateStr);
+    const junction = points.find(
+      (p) => p.dateStr === history[history.length - 1].dateStr,
+    );
     const junctionStart = junction ? `${junction.x},${junction.yUpper}` : "";
     const junctionEnd = junction ? `${junction.x},${junction.yLower}` : "";
 
@@ -329,36 +385,42 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
     const monthlyNet = metrics.monthlySlope;
     const finalProjection = forecast[forecast.length - 1];
     const diff = finalProjection.balance - totalLiquidity;
-    const percentage = ((diff / (totalLiquidity || 1)) * 100);
+    const percentage = (diff / (totalLiquidity || 1)) * 100;
 
     return {
       growth: diff >= 0,
       percentageStr: `${percentage >= 0 ? "+" : ""}${percentage.toFixed(1)}%`,
       diffStr: formatCurrency(Math.abs(diff)),
-      volatilityState: metrics.dailyVolatility > (totalLiquidity * 0.03) ? "Elevated Volatility" : "Highly Stable",
-      verdict: diff >= 0 
-        ? "Your current transactional velocity indicates expanding treasury buffers. Maintaining current overhead will lead to optimal savings milestones."
-        : "Predictive diagnostics signal potential net worth compaction on this horizon. Consider rebalancing monthly subscription due bills or restricting elastic spend."
+      volatilityState:
+        metrics.dailyVolatility > totalLiquidity * 0.03
+          ? "Elevated Volatility"
+          : "Low observed variability",
+      verdict:
+        diff >= 0
+          ? "Your current transactional velocity indicates expanding treasury buffers. Maintaining current overhead will lead to optimal savings milestones."
+          : "Predictive diagnostics signal potential net worth compaction on this horizon. Consider rebalancing monthly subscription due bills or restricting elastic spend.",
     };
   }, [forecast, metrics, totalLiquidity]);
 
   return (
-    <div id="smart-projections-desk" className="space-y-6 max-w-7xl mx-auto font-sans text-slate-200">
-      
+    <div
+      id="smart-projections-desk"
+      className="space-y-6 max-w-7xl mx-auto font-sans text-slate-200"
+    >
       {/* Top Banner introducing statistics */}
       <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl p-6 relative overflow-hidden shadow-lg">
         <div className="absolute right-0 top-0 opacity-10 pointer-events-none translate-x-6 -translate-y-4">
           <Sparkles className="w-56 h-56 text-rose-500" />
         </div>
-        
+
         <div className="max-w-3xl space-y-2 z-10 relative">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-1 rounded bg-[#0058be]/25 border border-[#3b8bf7]/30 text-[#60a5fa] font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" /> Forecast Tool Active
+              <Sparkles className="w-3.5 h-3.5" /> Experimental forecast
             </span>
             {!metrics.hasEnoughData && (
               <span className="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/20 text-amber-400 font-bold text-[9px] uppercase tracking-wide">
-                Boosted Mode
+                Limited history
               </span>
             )}
           </div>
@@ -366,31 +428,40 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             My 90-Day Money Forecast
           </h2>
           <p className="text-sm text-slate-300 font-medium leading-relaxed">
-            A smart tool that looks at how you usually spend and get paid to guess how much money you might have over the next 90 days, so you can avoid running out of cash.
+            A smart tool that looks at how you usually spend and get paid to
+            guess how much money you might have over the next 90 days, so you
+            can avoid running out of cash.
           </p>
         </div>
       </div>
 
       {/* Grid containing metrics card panels */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        
         {/* Metric 1 */}
         <div className="p-5 bg-white border border-[#eff4ff] rounded-xl shadow-xs space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Current Balance</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              Current Balance
+            </span>
             <Wallet className="w-4 h-4 text-slate-400" />
           </div>
           <h3 className="text-xl font-bold font-mono text-white">
             {formatCurrency(totalLiquidity)}
           </h3>
-          <p className="text-[10.5px] text-slate-400 font-medium font-sans">Combined balance across active accounts</p>
+          <p className="text-[10.5px] text-slate-400 font-medium font-sans">
+            Combined balance across active accounts
+          </p>
         </div>
 
         {/* Metric 2 */}
         <div className="p-5 bg-white border border-[#eff4ff] rounded-xl shadow-xs space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Future Guess</span>
-            <span className={`p-1 rounded text-[9px] font-black uppercase ${projectionStatus.growth ? 'bg-emerald-950/40 text-emerald-400' : 'bg-rose-950/40 text-rose-400'}`}>
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              Future Guess
+            </span>
+            <span
+              className={`p-1 rounded text-[9px] font-black uppercase ${projectionStatus.growth ? "bg-emerald-950/40 text-emerald-400" : "bg-rose-950/40 text-rose-400"}`}
+            >
               {projectionStatus.percentageStr}
             </span>
           </div>
@@ -405,58 +476,75 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
         {/* Metric 3 */}
         <div className="p-5 bg-white border border-[#eff4ff] rounded-xl shadow-xs space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider font-sans">Monthly Speed</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider font-sans">
+              Monthly Speed
+            </span>
             {metrics.monthlySlope >= 0 ? (
               <TrendingUp className="w-4 h-4 text-emerald-500" />
             ) : (
               <TrendingDown className="w-4 h-4 text-rose-500" />
             )}
           </div>
-          <h3 className={`text-xl font-bold font-mono ${metrics.monthlySlope >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-            {metrics.monthlySlope >= 0 ? "+" : ""}{formatCurrency(metrics.monthlySlope)}
+          <h3
+            className={`text-xl font-bold font-mono ${metrics.monthlySlope >= 0 ? "text-emerald-400" : "text-rose-400"}`}
+          >
+            {metrics.monthlySlope >= 0 ? "+" : ""}
+            {formatCurrency(metrics.monthlySlope)}
           </h3>
-          <p className="text-[10.5px] text-slate-400 font-medium font-sans">Guessed monthly speed of savings</p>
+          <p className="text-[10.5px] text-slate-400 font-medium font-sans">
+            Guessed monthly speed of savings
+          </p>
         </div>
 
         {/* Metric 4 */}
         <div className="p-5 bg-white border border-[#eff4ff] rounded-xl shadow-xs space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider font-sans">Safe Level</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider font-sans">
+              Historical variability
+            </span>
             <ShieldCheck className="w-4 h-4 text-indigo-500" />
           </div>
           <h3 className="text-xl font-bold text-white font-mono">
-            {projectionStatus.volatilityState === "Elevated Volatility" ? "Moderate Fluctuation" : "Highly Stable"}
+            {projectionStatus.volatilityState === "Elevated Volatility"
+              ? "Moderate Fluctuation"
+              : "Low observed variability"}
           </h3>
-          <p className="text-[10.5px] text-slate-400 font-medium font-sans">Safety wiggle room: {formatCurrency(metrics.standardError)}</p>
+          <p className="text-[10.5px] text-slate-400 font-medium font-sans">
+            Model residual: {formatCurrency(metrics.standardError)}
+          </p>
         </div>
-
       </div>
 
       {/* Main Core Section: Interactive Controls Left & Chart Display Right */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
-        
         {/* Interactive parameter control sidebar */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-5">
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-750 pb-3">
               <Sliders className="w-4.5 h-4.5 text-[#60a5fa]" />
-              <h4 className="font-bold text-xs text-white uppercase tracking-widest font-sans">Change Settings</h4>
+              <h4 className="font-bold text-xs text-white uppercase tracking-widest font-sans">
+                Change Settings
+              </h4>
             </div>
 
             {/* Slider 1: Horizon */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[10.5px]">
-                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">How Far Ahead</label>
-                <span className="font-bold font-mono bg-slate-950 px-2 py-0.5 rounded text-white">{forecastHorizon} Days</span>
+                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">
+                  How Far Ahead
+                </label>
+                <span className="font-bold font-mono bg-slate-950 px-2 py-0.5 rounded text-white">
+                  {forecastHorizon} Days
+                </span>
               </div>
-              <input 
-                type="range" 
-                min={30} 
-                max={120} 
+              <input
+                type="range"
+                min={30}
+                max={120}
                 step={30}
                 value={forecastHorizon}
                 onChange={(e) => setForecastHorizon(Number(e.target.value))}
-                className="w-full accent-rose-700 cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none" 
+                className="w-full accent-rose-700 cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none"
               />
               <div className="flex justify-between text-[8.5px] text-slate-450 font-bold font-mono">
                 <span>30D</span>
@@ -469,18 +557,22 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             {/* Slider 2: Confidence Interval */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[10.5px]">
-                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">Sureness Level</label>
-                <span className="font-bold font-mono bg-slate-950 px-2 py-0.5 rounded text-white">{(confidenceLevel * 100).toFixed(0)}%</span>
+                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">
+                  Scenario band
+                </label>
+                <span className="font-bold font-mono bg-slate-950 px-2 py-0.5 rounded text-white">
+                  {(confidenceLevel * 100).toFixed(0)}%
+                </span>
               </div>
               <div className="grid grid-cols-3 gap-1.5">
-                {[0.80, 0.90, 0.95].map((val) => (
+                {[0.8, 0.9, 0.95].map((val) => (
                   <button
                     key={val}
                     type="button"
                     onClick={() => setConfidenceLevel(val)}
                     className={`py-1.5 text-[10px] font-bold rounded cursor-pointer transition-all border font-sans ${
-                      confidenceLevel === val 
-                        ? "bg-rose-700 border-rose-700 text-white" 
+                      confidenceLevel === val
+                        ? "bg-rose-700 border-rose-700 text-white"
                         : "bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800/50"
                     }`}
                   >
@@ -488,31 +580,38 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] text-slate-400 italic font-sans">Controls how safe/sure you want to be about the guess</p>
+              <p className="text-[9px] text-slate-400 italic font-sans">
+                Controls how safe/sure you want to be about the guess
+              </p>
             </div>
 
             {/* Slider 3: Stress Testing Simulation */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-[10.5px]">
-                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">Add Mock Extra Money</label>
-                <span className={`font-bold font-mono px-2 py-0.5 rounded ${
-                  simulationStress > 0 
-                    ? "bg-emerald-950/40 text-emerald-400" 
-                    : simulationStress < 0 
-                      ? "bg-rose-950/40 text-rose-450" 
-                      : "bg-slate-950 text-white"
-                }`}>
-                  {simulationStress > 0 ? "+" : ""}{formatCurrency(simulationStress)}/mo
+                <label className="font-bold text-slate-400 uppercase tracking-wider font-sans">
+                  Add Mock Extra Money
+                </label>
+                <span
+                  className={`font-bold font-mono px-2 py-0.5 rounded ${
+                    simulationStress > 0
+                      ? "bg-emerald-950/40 text-emerald-400"
+                      : simulationStress < 0
+                        ? "bg-rose-950/40 text-rose-450"
+                        : "bg-slate-950 text-white"
+                  }`}
+                >
+                  {simulationStress > 0 ? "+" : ""}
+                  {formatCurrency(simulationStress)}/mo
                 </span>
               </div>
-              <input 
-                type="range" 
-                min={-3000} 
-                max={3000} 
+              <input
+                type="range"
+                min={-3000}
+                max={3000}
                 step={250}
                 value={simulationStress}
                 onChange={(e) => setSimulationStress(Number(e.target.value))}
-                className="w-full accent-[#60a5fa] cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none" 
+                className="w-full accent-[#60a5fa] cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none"
               />
               <div className="flex justify-between text-[8px] text-slate-450 font-bold font-mono">
                 <span>-$3K/mo</span>
@@ -525,25 +624,36 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             {dueBills.length > 0 && (
               <div className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-850 text-[10.5px]">
                 <div>
-                  <p className="font-bold text-white font-sans">Include unpaid bills</p>
+                  <p className="font-bold text-white font-sans">
+                    Include unpaid bills
+                  </p>
                   <p className="text-[9px] text-slate-400 font-sans">
                     {(() => {
-                      const expCount = dueBills.filter(b => b.type === "expense").length;
-                      const incCount = dueBills.filter(b => b.type === "profit").length;
+                      const expCount = dueBills.filter(
+                        (b) => b.type === "expense",
+                      ).length;
+                      const incCount = dueBills.filter(
+                        (b) => b.type === "profit",
+                      ).length;
                       const parts = [];
-                      if (expCount > 0) parts.push(`subtract ${expCount} bill${expCount === 1 ? "" : "s"}`);
-                      if (incCount > 0) parts.push(`add ${incCount} income/pay`);
-                      return parts.length > 0 
-                        ? parts.join(" & ").slice(0, 1).toUpperCase() + parts.join(" & ").slice(1)
+                      if (expCount > 0)
+                        parts.push(
+                          `subtract ${expCount} bill${expCount === 1 ? "" : "s"}`,
+                        );
+                      if (incCount > 0)
+                        parts.push(`add ${incCount} income/pay`);
+                      return parts.length > 0
+                        ? parts.join(" & ").slice(0, 1).toUpperCase() +
+                            parts.join(" & ").slice(1)
                         : "Include recurring bills";
                     })()}
                   </p>
                 </div>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={includeBills}
                   onChange={(e) => setIncludeBills(e.target.checked)}
-                  className="rounded text-rose-700 focus:ring-rose-500 w-4 h-4 cursor-pointer" 
+                  className="rounded text-rose-700 focus:ring-rose-500 w-4 h-4 cursor-pointer"
                 />
               </div>
             )}
@@ -553,21 +663,30 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
           <div className="bg-slate-950 border border-slate-850 p-3.5 rounded-xl text-[10px] text-slate-400 font-sans leading-relaxed flex gap-2.5 items-start">
             <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             <div className="space-y-1 font-sans">
-              <p className="font-bold text-white leading-tight font-sans">How are these guessed?</p>
-              <p className="font-sans text-[9.5px]">The colored path shows the best-case and worst-case scenarios for your cash based on past spending ups and downs. The further out we forecast, the wider the path gets because the future is harder to predict perfectly!</p>
+              <p className="font-bold text-white leading-tight font-sans">
+                How are these guessed?
+              </p>
+              <p className="font-sans text-[9.5px]">
+                The colored path shows the best-case and worst-case scenarios
+                for your cash based on past spending ups and downs. The further
+                out we forecast, the wider the path gets because the future is
+                harder to predict perfectly!
+              </p>
             </div>
           </div>
         </div>
 
         {/* Dynamic Interactive SVG Chart Section */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm lg:col-span-3 flex flex-col justify-between relative overflow-hidden">
-          
           <div className="flex items-center justify-between border-b border-slate-150 pb-3 mb-2">
             <div>
               <h4 className="font-bold text-xs text-white uppercase tracking-widest flex items-center gap-1.5 font-sans">
-                <Clock className="w-3.5 h-3.5 text-[#60a5fa]" /> Our Guessing Map
+                <Clock className="w-3.5 h-3.5 text-[#60a5fa]" /> Our Guessing
+                Map
               </h4>
-              <p className="text-[10px] text-slate-400 font-sans">Move your cursor over the dots/lines to see predicted balances</p>
+              <p className="text-[10px] text-slate-400 font-sans">
+                Move your cursor over the dots/lines to see predicted balances
+              </p>
             </div>
 
             {/* Legends */}
@@ -589,34 +708,36 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
           {/* Chart Wrapper Container */}
           <div className="relative flex-1 py-1 flex items-center justify-center">
-            
             {/* SVG Content */}
-            <svg 
-              viewBox={`0 0 ${width} ${height}`} 
+            <svg
+              viewBox={`0 0 ${width} ${height}`}
               className="w-full h-full select-none overflow-visible"
               onMouseLeave={() => setActiveTooltip(null)}
             >
               {/* Grid lines and guides */}
               {Array.from({ length: 5 }).map((_, i) => {
                 const y = paddingTop + (usableHeight / 4) * i;
-                const valueLabel = chartBounds.max - (chartBounds.range / 4) * i;
+                const valueLabel =
+                  chartBounds.max - (chartBounds.range / 4) * i;
                 return (
                   <g key={i}>
-                    <line 
-                      x1={paddingLeft} 
-                      y1={y} 
-                      x2={width - 30} 
-                      y2={y} 
-                      stroke="#f1f5f9" 
-                      strokeWidth={1} 
+                    <line
+                      x1={paddingLeft}
+                      y1={y}
+                      x2={width - 30}
+                      y2={y}
+                      stroke="#f1f5f9"
+                      strokeWidth={1}
                     />
-                    <text 
-                      x={paddingLeft - 10} 
-                      y={y + 3} 
-                      textAnchor="end" 
+                    <text
+                      x={paddingLeft - 10}
+                      y={y + 3}
+                      textAnchor="end"
                       className="fill-slate-400 text-[8.5px] font-semibold font-mono"
                     >
-                      {valueLabel >= 1000 ? `$${(valueLabel / 1000).toFixed(1)}k` : `$${valueLabel.toFixed(0)}`}
+                      {valueLabel >= 1000
+                        ? `$${(valueLabel / 1000).toFixed(1)}k`
+                        : `$${valueLabel.toFixed(0)}`}
                     </text>
                   </g>
                 );
@@ -624,7 +745,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
               {/* Shaded confidence interval polygon (Variance) */}
               {variancePolygonDPath && (
-                <path 
+                <path
                   d={variancePolygonDPath}
                   fill="url(#varianceGrad)"
                   opacity={0.7}
@@ -634,16 +755,16 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
               {/* Forecast upper and lower boundary dash paths instead of just area */}
               {projectedPathPoints.length > 0 && (
                 <>
-                  <path 
-                    d={`M ${projectedPathPoints.map(p => `${p.x},${p.yUpper}`).join(" L ")}`}
+                  <path
+                    d={`M ${projectedPathPoints.map((p) => `${p.x},${p.yUpper}`).join(" L ")}`}
                     stroke="#dc2626"
                     strokeWidth={0.8}
                     strokeDasharray="2 3"
                     fill="none"
                     opacity={0.4}
                   />
-                  <path 
-                    d={`M ${projectedPathPoints.map(p => `${p.x},${p.yLower}`).join(" L ")}`}
+                  <path
+                    d={`M ${projectedPathPoints.map((p) => `${p.x},${p.yLower}`).join(" L ")}`}
                     stroke="#dc2626"
                     strokeWidth={0.8}
                     strokeDasharray="2 3"
@@ -655,7 +776,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
               {/* Historical Net Balance Line */}
               {historicalDPath && (
-                <path 
+                <path
                   d={historicalDPath}
                   stroke="var(--slate-705)"
                   strokeWidth={2.5}
@@ -667,7 +788,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
               {/* Forecast Net Balance Line (Trend line) */}
               {projectedDPath && (
-                <path 
+                <path
                   d={projectedDPath}
                   stroke="#dc2626"
                   strokeWidth={2.5}
@@ -680,13 +801,21 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
               {/* Horizontal zero reference if negative net worth possible */}
               {chartBounds.min < 0 && (
-                <line 
-                  x1={paddingLeft} 
-                  y1={paddingTop + usableHeight - ((0 - chartBounds.min) / chartBounds.range) * usableHeight} 
-                  x2={width - 30} 
-                  y2={paddingTop + usableHeight - ((0 - chartBounds.min) / chartBounds.range) * usableHeight} 
-                  stroke="#f87171" 
-                  strokeWidth={1.5} 
+                <line
+                  x1={paddingLeft}
+                  y1={
+                    paddingTop +
+                    usableHeight -
+                    ((0 - chartBounds.min) / chartBounds.range) * usableHeight
+                  }
+                  x2={width - 30}
+                  y2={
+                    paddingTop +
+                    usableHeight -
+                    ((0 - chartBounds.min) / chartBounds.range) * usableHeight
+                  }
+                  stroke="#f87171"
+                  strokeWidth={1.5}
                   strokeDasharray="1 3"
                 />
               )}
@@ -694,16 +823,18 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
               {/* Interactive Hover trigger nodes */}
               {points.map((pt, idx) => {
                 // Throttle coordinates to keep render fast (only draw a node every 3 items for history, and every item for forecast to align exactly)
-                const shouldDisplayNode = pt.isProjected ? (idx % 2 === 0 || idx === points.length - 1) : (idx % 5 === 0);
+                const shouldDisplayNode = pt.isProjected
+                  ? idx % 2 === 0 || idx === points.length - 1
+                  : idx % 5 === 0;
                 if (!shouldDisplayNode) return null;
 
                 const isHovered = activeTooltip?.date === pt.dateStr;
 
                 return (
                   <g key={idx}>
-                    <circle 
-                      cx={pt.x} 
-                      cy={pt.y} 
+                    <circle
+                      cx={pt.x}
+                      cy={pt.y}
                       r={isHovered ? 6 : 1.5}
                       fill={pt.isProjected ? "#dc2626" : "var(--slate-705)"}
                       className="cursor-pointer transition-all duration-100"
@@ -715,7 +846,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
                           value: pt.balance,
                           upper: pt.upper,
                           lower: pt.lower,
-                          isProjected: pt.isProjected
+                          isProjected: pt.isProjected,
                         });
                       }}
                     />
@@ -734,7 +865,7 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
                           value: pt.balance,
                           upper: pt.upper,
                           lower: pt.lower,
-                          isProjected: pt.isProjected
+                          isProjected: pt.isProjected,
                         });
                       }}
                     />
@@ -753,32 +884,42 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
             {/* Float Tooltip Drawer */}
             {activeTooltip && (
-              <div 
+              <div
                 className="absolute z-40 bg-[#0f172a] text-white rounded-lg p-3 text-[10.5px] border border-slate-700 shadow-xl pointer-events-none space-y-1 w-44 font-sans"
                 style={{
                   left: `${(activeTooltip.x / width) * 100}%`,
                   top: `${Math.min(height - 110, Math.max(10, activeTooltip.y - 100))}`,
-                  transform: 'translateX(-50%)'
+                  transform: "translateX(-50%)",
                 }}
               >
                 <div className="flex items-center justify-between border-b border-slate-800 pb-1 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-                  <span>{activeTooltip.isProjected ? "D forecast" : "Historical Log"}</span>
+                  <span>
+                    {activeTooltip.isProjected
+                      ? "D forecast"
+                      : "Historical Log"}
+                  </span>
                   <span>{activeTooltip.date}</span>
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex justify-between">
                     <span className="text-slate-400">Net Worth:</span>
-                    <strong className="font-mono text-white">{formatCurrency(activeTooltip.value)}</strong>
+                    <strong className="font-mono text-white">
+                      {formatCurrency(activeTooltip.value)}
+                    </strong>
                   </div>
                   {activeTooltip.isProjected && (
                     <>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Upper cap:</span>
-                        <strong className="font-mono text-emerald-400">{formatCurrency(activeTooltip.upper)}</strong>
+                        <strong className="font-mono text-emerald-400">
+                          {formatCurrency(activeTooltip.upper)}
+                        </strong>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Lower floor:</span>
-                        <strong className="font-mono text-rose-400">{formatCurrency(activeTooltip.lower)}</strong>
+                        <strong className="font-mono text-rose-400">
+                          {formatCurrency(activeTooltip.lower)}
+                        </strong>
                       </div>
                     </>
                   )}
@@ -789,7 +930,9 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
 
           {/* Descriptive Verdict bar below the chart */}
           <div className="mt-3 p-4 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-3.5 text-xs">
-            <div className={`p-2 rounded-lg ${projectionStatus.growth ? 'bg-emerald-50 text-emerald-600': 'bg-rose-50 text-rose-600'}`}>
+            <div
+              className={`p-2 rounded-lg ${projectionStatus.growth ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}
+            >
               {projectionStatus.growth ? (
                 <TrendingUp className="w-4.5 h-4.5" />
               ) : (
@@ -798,18 +941,21 @@ export default function SmartProjections({ budgets, transactions, dueBills = [] 
             </div>
             <div className="space-y-1">
               <p className="font-bold text-white">
-                {projectionStatus.growth ? "Optimal Structural Trajectory" : "Decline Threshold Warning"}
+                {projectionStatus.growth
+                  ? "Optimal Structural Trajectory"
+                  : "Decline Threshold Warning"}
               </p>
               <p className="text-slate-400 font-sans leading-relaxed text-[11px]">
-                {projectionStatus.verdict} {metrics.dueBillsDeducted > 0 && `Upcoming due liabilities of ${formatCurrency(metrics.dueBillsDeducted)} have been subtracted.`} {metrics.dueBillsAdded > 0 && `Upcoming paycheck/income of ${formatCurrency(metrics.dueBillsAdded)} has been added to improve future forecasting.`}
+                {projectionStatus.verdict}{" "}
+                {metrics.dueBillsDeducted > 0 &&
+                  `Upcoming due liabilities of ${formatCurrency(metrics.dueBillsDeducted)} have been subtracted.`}{" "}
+                {metrics.dueBillsAdded > 0 &&
+                  `Upcoming paycheck/income of ${formatCurrency(metrics.dueBillsAdded)} has been added to improve future forecasting.`}
               </p>
             </div>
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }

@@ -1,19 +1,20 @@
 import { useState, useEffect, useRef } from "react";
-import { 
-  Menu, X,
-  LayoutDashboard, 
-  Wallet, 
-  History, 
-  Calculator, 
-  Settings, 
-  HelpCircle, 
-  LogOut, 
-  Radio, 
-  Users, 
-  Globe, 
-  Wifi, 
-  WifiOff, 
-  TrendingUp 
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  Wallet,
+  History,
+  Calculator,
+  Settings,
+  HelpCircle,
+  LogOut,
+  Radio,
+  Users,
+  Globe,
+  Wifi,
+  WifiOff,
+  TrendingUp,
 } from "lucide-react";
 import { Collaborator } from "../types";
 
@@ -44,31 +45,45 @@ export default function Sidebar({
   onShowJoinModal,
   onDisconnectRoom,
   onLogout,
-  onShowToast
+  onShowToast,
 }: SidebarProps) {
-  
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLElement>(null);
-  const closeMenu = () => { setMobileOpen(false); menuButton.current?.focus(); };
+  const closeMenu = () => {
+    setMobileOpen(false);
+    menuButton.current?.focus();
+  };
   useEffect(() => {
     if (!mobileOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     drawer.current?.querySelector<HTMLButtonElement>("button")?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.preventDefault(); closeMenu(); }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMenu();
+      }
       if (event.key === "Tab") {
-        const buttons = drawer.current?.querySelectorAll<HTMLButtonElement>("button");
+        const buttons =
+          drawer.current?.querySelectorAll<HTMLButtonElement>("button");
         if (!buttons?.length) return;
-        const first = buttons[0], last = buttons[buttons.length - 1];
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        const first = buttons[0],
+          last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
     document.addEventListener("keydown", onKeyDown);
     const media = window.matchMedia("(min-width: 1024px)");
-    const onResize = () => { if (media.matches) setMobileOpen(false); };
+    const onResize = () => {
+      if (media.matches) setMobileOpen(false);
+    };
     media.addEventListener("change", onResize);
     return () => {
       document.body.style.overflow = previousOverflow;
@@ -87,181 +102,265 @@ export default function Sidebar({
 
   return (
     <>
-      <div id="mobile-nav-bar" className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
-        <span className="font-bold text-white">🍽️ Cash Diet <span className="text-[10px] text-rose-400">BETA</span></span>
-        <button ref={menuButton} aria-label="Open navigation" aria-expanded={mobileOpen} aria-controls="app-sidebar" onClick={() => setMobileOpen(true)} className="min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-slate-800 text-rose-400"><Menu className="w-5 h-5" /></button>
-      </div>
-      {mobileOpen && <button aria-label="Close navigation" tabIndex={-1} onClick={closeMenu} className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />}
-    <aside ref={drawer} 
-      id="app-sidebar" 
-      className={`${mobileOpen ? "flex" : "hidden"} lg:flex w-72 lg:w-64 max-w-[85vw] bg-slate-950 border-r border-slate-800 flex-col justify-between gap-8 h-dvh overflow-y-auto overscroll-contain fixed top-0 left-0 z-50 lg:z-30 font-sans p-5 lg:p-6 text-slate-255 backdrop-blur-md`}
-    >
-      <div>
-        <button aria-label="Close menu" onClick={closeMenu} className="lg:hidden ml-auto mb-3 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-800 text-rose-400"><X className="w-5 h-5" /></button>
-        {/* Brand Header */}
-        <div id="brand-header" className="mb-8 flex items-center gap-3 px-1">
-          <div className="w-9 h-9 bg-rose-700 rounded-lg flex items-center justify-center font-bold text-[#050a18] shadow-md shadow-rose-700/35 shrink-0">🍽️💵</div>
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h1 id="brand-title" className="text-[14px] font-black tracking-tight text-white leading-none">Cash Diet</h1>
-              <span className="text-[8px] font-extrabold px-1 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-widest leading-none">BETA</span>
-            </div>
-            <p id="brand-subtitle" className="text-[9px] font-bold tracking-wider text-rose-400 uppercase mt-1">Your Wallet's Diet</p>
-          </div>
-        </div>
-
-        {/* Dynamic Synchronization State Unit (styled as Bento item) */}
-        <div 
-          id="sync-status-capsule" 
-          className="mb-6 p-4 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-900/80 transition-all text-xs"
+      <div
+        id="mobile-nav-bar"
+        className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md"
+      >
+        <span className="font-bold text-white">
+          🍽️ Cash Diet <span className="text-[10px] text-rose-400">BETA</span>
+        </span>
+        <button
+          ref={menuButton}
+          aria-label="Open navigation"
+          aria-expanded={mobileOpen}
+          aria-controls="app-sidebar"
+          onClick={() => setMobileOpen(true)}
+          className="min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-slate-800 text-rose-400"
         >
-          <div className="flex items-center justify-between gap-2 mb-2.5">
-            <span className="font-semibold text-slate-400 uppercase tracking-wider text-[9px]">My Connection</span>
-            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold text-[9px] ${
-              online ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${online ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`}></span>
-              {online ? "Online" : "Saved Offline"}
-            </span>
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
+      {mobileOpen && (
+        <button
+          aria-label="Close navigation"
+          tabIndex={-1}
+          onClick={closeMenu}
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        />
+      )}
+      <aside
+        ref={drawer}
+        id="app-sidebar"
+        className={`${mobileOpen ? "flex" : "hidden"} lg:flex w-72 lg:w-64 max-w-[85vw] bg-slate-950 border-r border-slate-800 flex-col justify-between gap-8 h-dvh overflow-y-auto overscroll-contain fixed top-0 left-0 z-50 lg:z-30 font-sans p-5 lg:p-6 text-slate-255 backdrop-blur-md`}
+      >
+        <div>
+          <button
+            aria-label="Close menu"
+            onClick={closeMenu}
+            className="lg:hidden ml-auto mb-3 flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-800 text-rose-400"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {/* Brand Header */}
+          <div id="brand-header" className="mb-8 flex items-center gap-3 px-1">
+            <div className="w-9 h-9 bg-rose-700 rounded-lg flex items-center justify-center font-bold text-[#050a18] shadow-md shadow-rose-700/35 shrink-0">
+              🍽️💵
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h1
+                  id="brand-title"
+                  className="text-[14px] font-black tracking-tight text-white leading-none"
+                >
+                  Cash Diet
+                </h1>
+                <span className="text-[8px] font-extrabold px-1 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-widest leading-none">
+                  BETA
+                </span>
+              </div>
+              <p
+                id="brand-subtitle"
+                className="text-[9px] font-bold tracking-wider text-rose-400 uppercase mt-1"
+              >
+                Your Wallet's Diet
+              </p>
+            </div>
           </div>
 
-          {!roomId ? (
-            <button
-              onClick={() => { onShowJoinModal(); closeMenu(); }}
-              className="w-full py-2 px-3 bg-rose-700 hover:bg-rose-600 text-xs font-semibold text-white rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-rose-700/30"
-            >
-              <Radio className="w-3.5 h-3.5 animate-pulse" />
-              Work with Friends
-            </button>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-[10px] bg-slate-850 p-2 rounded-lg border border-slate-700">
-                <span className="font-mono text-rose-400 font-bold">Room: {roomId}</span>
-                <button 
-                  onClick={onDisconnectRoom}
-                  className="text-rose-400 hover:text-rose-300 font-bold hover:underline cursor-pointer"
-                >
-                  Leave
-                </button>
-              </div>
-              
-              {activeUsers.length > 0 && (
-                <div className="mt-2">
-                   <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1 font-semibold">
-                    <Users className="w-3 h-3" />
-                    <span>Who is online ({activeUsers.length + 1})</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto pt-1">
-                    {/* Logged in self */}
-                    <span 
-                      title={userEmail}
-                      className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-950 text-rose-300 border border-rose-900 max-w-[100px] truncate"
-                    >
-                      Me ({userName ? userName.slice(0, 8) : "Me"})
-                    </span>
-                    {/* Other connected users */}
-                    {activeUsers.slice(0, 3).map((u, i) => (
-                      <span 
-                        key={i}
-                        title={u.email}
-                        className="px-1.5 py-0.5 rounded text-[10px] font-medium border text-white max-w-[100px] truncate"
-                        style={{ backgroundColor: u.color, borderColor: u.color }}
-                      >
-                        {u.name.split(" ")[0] || "Peer"}
-                      </span>
-                    ))}
-                    {activeUsers.length > 3 && (
-                      <span className="text-[10px] self-center text-slate-400 font-bold">+{activeUsers.length - 3}</span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Primary Navigation Hub */}
-        <nav id="sidebar-nav" className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const active = currentTab === item.id;
-            return (
-              <button
-                key={item.id}
-                id={`nav-${item.id}`}
-                aria-current={active ? "page" : undefined}
-                onClick={() => { onChangeTab(item.id); closeMenu(); }}
-                className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                  active 
-                    ? "bg-slate-800 text-rose-400 border border-slate-700/50 shadow-md font-semibold" 
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+          {/* Dynamic Synchronization State Unit (styled as Bento item) */}
+          <div
+            id="sync-status-capsule"
+            className="mb-6 p-4 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-900/80 transition-all text-xs"
+          >
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <span className="font-semibold text-slate-400 uppercase tracking-wider text-[9px]">
+                My Connection
+              </span>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold text-[9px] ${
+                  online
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                 }`}
               >
-                <Icon className={`w-4.5 h-4.5 ${active ? "text-rose-400" : "text-slate-400"}`} />
-                <span>{item.label}</span>
-                {active && <span className="ml-auto w-1.5 h-1.5 bg-rose-400 rounded-full animate-ping" />}
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${online ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`}
+                ></span>
+                {online ? "Online" : "Offline"}
+              </span>
+            </div>
+
+            {!roomId ? (
+              <button
+                onClick={() => {
+                  onShowJoinModal();
+                  closeMenu();
+                }}
+                className="w-full py-2 px-3 bg-rose-700 hover:bg-rose-600 text-xs font-semibold text-white rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-rose-700/30"
+              >
+                <Radio className="w-3.5 h-3.5 animate-pulse" />
+                Work with Friends
               </button>
-            );
-          })}
-        </nav>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[10px] bg-slate-850 p-2 rounded-lg border border-slate-700">
+                  <span className="font-mono text-rose-400 font-bold">
+                    Room: {roomId}
+                  </span>
+                  <button
+                    onClick={onDisconnectRoom}
+                    className="text-rose-400 hover:text-rose-300 font-bold hover:underline cursor-pointer"
+                  >
+                    Leave
+                  </button>
+                </div>
 
-        {/* New Scenario Sidebar Shortcut */}
-        <div id="new-scenario-box" className="mt-8 pt-4 border-t border-slate-800">
-          <button
-            onClick={() => { onTriggerNewScenario(); closeMenu(); }}
-            id="btn-sidebar-new-scenario"
-            className="w-full py-2.5 px-4 bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold tracking-wider uppercase rounded-xl transition-all shadow-sm shadow-rose-700/30 text-center cursor-pointer"
-          >
-            New Scenario
-          </button>
-        </div>
-      </div>
-
-      {/* Footer Utilities */}
-      <div id="sidebar-footer" className="space-y-4">
-        {/* User profile (The Reliable Advisor profile metadata at bottom) */}
-        <div id="advisor-profile-card" className="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
-          <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-200 overflow-hidden shrink-0">
-            <img 
-              src={`https://api.dicebear.com/7.x/bottts/svg?seed=${userEmail}`} 
-              alt="avatar" 
-              className="w-full h-full object-cover" 
-              referrerPolicy="no-referrer"
-            />
+                {activeUsers.length > 0 && (
+                  <div className="mt-2">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1 font-semibold">
+                      <Users className="w-3 h-3" />
+                      <span>Shared workspace</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto pt-1">
+                      {/* Logged in self */}
+                      <span
+                        title={userEmail}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-950 text-rose-300 border border-rose-900 max-w-[100px] truncate"
+                      >
+                        Me ({userName ? userName.slice(0, 8) : "Me"})
+                      </span>
+                      {/* Other connected users */}
+                      {activeUsers.slice(0, 3).map((u, i) => (
+                        <span
+                          key={i}
+                          title={u.email}
+                          className="px-1.5 py-0.5 rounded text-[10px] font-medium border text-white max-w-[100px] truncate"
+                          style={{
+                            backgroundColor: u.color,
+                            borderColor: u.color,
+                          }}
+                        >
+                          {u.name.split(" ")[0] || "Peer"}
+                        </span>
+                      ))}
+                      {activeUsers.length > 3 && (
+                        <span className="text-[10px] self-center text-slate-400 font-bold">
+                          +{activeUsers.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-slate-200 truncate">{userName}</p>
-            <p className="text-[10px] text-slate-400 truncate">{userEmail}</p>
+
+          {/* Primary Navigation Hub */}
+          <nav id="sidebar-nav" className="space-y-1">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = currentTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  id={`nav-${item.id}`}
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => {
+                    onChangeTab(item.id);
+                    closeMenu();
+                  }}
+                  className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                    active
+                      ? "bg-slate-800 text-rose-400 border border-slate-700/50 shadow-md font-semibold"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                  }`}
+                >
+                  <Icon
+                    className={`w-4.5 h-4.5 ${active ? "text-rose-400" : "text-slate-400"}`}
+                  />
+                  <span>{item.label}</span>
+                  {active && (
+                    <span className="ml-auto w-1.5 h-1.5 bg-rose-400 rounded-full animate-ping" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* New Scenario Sidebar Shortcut */}
+          <div
+            id="new-scenario-box"
+            className="mt-8 pt-4 border-t border-slate-800"
+          >
+            <button
+              onClick={() => {
+                onTriggerNewScenario();
+                closeMenu();
+              }}
+              id="btn-sidebar-new-scenario"
+              className="w-full py-2.5 px-4 bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold tracking-wider uppercase rounded-xl transition-all shadow-sm shadow-rose-700/30 text-center cursor-pointer"
+            >
+              New Scenario
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 text-slate-400 text-xs font-medium">
-          <button id="btn-sidebar-help" onClick={() => {
-            if (onShowToast) {
-              onShowToast("Need help? We save your money plans automatically, so you can check and update them even without internet!", "info");
-            }
-          }} className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer">
-            <HelpCircle className="w-4 h-4" />
-            <span>Help</span>
-          </button>
-          <button 
-            id="btn-sidebar-logout" 
-            onClick={() => {
-              if (onLogout) {
-                onLogout();
-              } else if (onShowToast) {
-                onShowToast("You logged out! Your app is still saved and ready on the server.", "info");
-              }
-            }} 
-            className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer"
+        {/* Footer Utilities */}
+        <div id="sidebar-footer" className="space-y-4">
+          {/* User profile (The Reliable Advisor profile metadata at bottom) */}
+          <div
+            id="advisor-profile-card"
+            className="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 shadow-sm"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
-          </button>
+            <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-200 overflow-hidden shrink-0">
+              <span aria-hidden="true">
+                {(userName || "Guest").slice(0, 2).toUpperCase()}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-200 truncate">
+                {userName}
+              </p>
+              <p className="text-[10px] text-slate-400 truncate">{userEmail}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1 text-slate-400 text-xs font-medium">
+            <button
+              id="btn-sidebar-help"
+              onClick={() => {
+                if (onShowToast) {
+                  onShowToast(
+                    "Need help? We save your money plans automatically, so you can check and update them even without internet!",
+                    "info",
+                  );
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer"
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span>Help</span>
+            </button>
+            <button
+              id="btn-sidebar-logout"
+              onClick={() => {
+                if (onLogout) {
+                  onLogout();
+                } else if (onShowToast) {
+                  onShowToast(
+                    "You logged out! Your app is still saved and ready on the server.",
+                    "info",
+                  );
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
     </>
   );
 }
-

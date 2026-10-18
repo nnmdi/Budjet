@@ -1,202 +1,229 @@
-import React, { useState } from "react";
-import { 
-  Users, 
-  PlusCircle, 
-  DoorOpen, 
-  Copy, 
-  Check, 
-  Activity, 
-  ArrowLeftRight, 
-  HeartHandshake 
-} from "lucide-react";
-import { Room, Collaborator } from "../types";
-
-interface CollaborationHubProps {
+import { useEffect, useRef, useState } from "react";
+import { request } from "../hooks/useWorkspace";
+import type { Room, Collaborator } from "../types";
+interface Props {
+  invitation?: string;
   onJoinRoom: (code: string) => void;
   onCreateRoom: () => void;
-  online: boolean;
+  onDisconnectRoom: () => void;
   roomId: string | null;
   roomDetails: Room | null;
   activeUsers: Collaborator[];
-  onDisconnectRoom: () => void;
+  online: boolean;
   onClose: () => void;
 }
-
 export default function CollaborationHub({
+  invitation = "",
   onJoinRoom,
   onCreateRoom,
-  online,
-  roomId,
-  roomDetails,
-  activeUsers,
   onDisconnectRoom,
-  onClose
-}: CollaborationHubProps) {
-  
-  const [roomCodeInput, setRoomCodeInput] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [errorText, setErrorText] = useState("");
-
-  const handleCopyCode = () => {
-    if (roomId) {
-      navigator.clipboard.writeText(roomId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  roomId,
+  online,
+  onClose,
+}: Props) {
+  const [code, setCode] = useState(""),
+    [invite, setInvite] = useState(invitation),
+    [error, setError] = useState("");
+  const [rooms, setRooms] = useState<{ id: string; owner: boolean }[]>([]);
+  useEffect(() => {
+    request("/api/rooms")
+      .then((data) => setRooms(data.rooms))
+      .catch(() => setRooms([]));
+  }, [roomId]);
+  const [members, setMembers] = useState<
+    { id: string; name: string; email: string }[]
+  >([]);
+  useEffect(() => {
+    if (roomId)
+      request(`/api/rooms/${roomId}/members`)
+        .then((data) => setMembers(data.members))
+        .catch(() => setMembers([]));
+  }, [roomId]);
+  const revoke = async (id: string) => {
+    try {
+      await request(`/api/rooms/${roomId}/members/${id}`, {
+        method: "DELETE",
+        body: "{}",
+      });
+      setMembers((prev) => prev.filter((m) => m.id !== id));
+      setInvite("");
+      setError(
+        "Member removed and previous invitations invalidated. Issue a new invitation if needed.",
+      );
+    } catch (e) {
+      setError((e as Error).message);
     }
   };
-
-  const handleJoin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanCode = roomCodeInput.trim();
-    if (cleanCode.length !== 6 || isNaN(Number(cleanCode))) {
-      setErrorText("Please enter a valid 6-digit collaboration code.");
-      return;
+  const dialog = useRef<HTMLDivElement>(null);
+  useEffect(() => setInvite(invitation), [invitation]);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    dialog.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "Tab") {
+        const items =
+          dialog.current?.querySelectorAll<HTMLElement>("button,input");
+        if (!items?.length) return;
+        const first = items[0],
+          last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("keydown", key);
+      previous?.focus();
+    };
+  }, [onClose]);
+  const rotate = async () => {
+    try {
+      const data = await request(`/api/rooms/${roomId}/invite`, {
+        method: "POST",
+        body: "{}",
+      });
+      setInvite(data.invitation);
+      setError("");
+    } catch (e) {
+      setError((e as Error).message);
     }
-    setErrorText("");
-    onJoinRoom(cleanCode);
-    setRoomCodeInput("");
   };
-
   return (
-    <div id="collaboration-modal-backdrop" className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div 
-        id="collaboration-modal" 
-        className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl max-w-lg w-full overflow-hidden font-sans flex flex-col h-[520px] transition-all animate-fade-in"
+    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+      <div
+        ref={dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="room-heading"
+        className="bg-slate-900 border border-slate-700 text-white rounded-2xl p-6 w-full max-w-lg space-y-5"
       >
-        {/* Modal Header */}
-        <div className="bg-slate-950 text-white p-5 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-900 border border-slate-800 rounded-xl text-rose-400">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-base leading-snug text-white">Share My App</h3>
-              <p className="text-[9px] text-rose-400 uppercase tracking-widest font-sans mt-0.5 font-bold">Work Together with Friends</p>
-            </div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="text-slate-400 hover:text-white font-bold text-xs tracking-tight border border-slate-800 px-3 py-1.5 rounded-xl hover:bg-slate-900 transition-all cursor-pointer"
-          >
+        <div className="flex justify-between">
+          <h2 id="room-heading" className="font-bold">
+            Shared workspace
+          </h2>
+          <button aria-label="Close shared workspace" onClick={onClose}>
             Close
           </button>
         </div>
-
-        {/* Modal Content */}
-        <div className="p-6 flex-1 overflow-y-auto space-y-6 font-sans">
-          
-          {/* Section 1: Connection & Room Configuration */}
-          {!roomId ? (
-            <div className="flex flex-col gap-4 font-sans">
-              <div className="text-center p-5 bg-slate-950/50 rounded-xl border border-slate-800 mb-2 font-sans">
-                <HeartHandshake className="w-8 h-8 text-rose-400 mx-auto mb-2 animate-bounce" />
-                <p className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto font-medium font-sans">
-                  Invite friends or family to see your budgets and use the money tools together in real time!
-                </p>
+        <p className="text-sm text-slate-300">
+          Shared rooms require server accounts. Invite people you trust to edit
+          a shared copy of your budgets. Your personal workspace stays separate.
+          Use Reload latest to fetch other editors’ changes.
+        </p>
+        {!online && (
+          <p role="status" className="text-amber-300">
+            You are offline. Server changes cannot be saved.
+          </p>
+        )}
+        {roomId ? (
+          <>
+            <p className="break-all text-xs text-slate-400">Room: {roomId}</p>
+            {invite && (
+              <label className="block text-sm">
+                Private invitation
+                <input
+                  readOnly
+                  value={invite}
+                  onFocus={(e) => e.target.select()}
+                  className="block w-full bg-slate-950 rounded p-3 mt-2"
+                />
+              </label>
+            )}
+            {invite && (
+              <button
+                onClick={() =>
+                  void navigator.clipboard
+                    .writeText(invite)
+                    .catch(() =>
+                      setError("Select and copy the invitation above."),
+                    )
+                }
+                className="block text-sm text-rose-300"
+              >
+                Copy invitation
+              </button>
+            )}
+            <button
+              onClick={() => void rotate()}
+              className="text-sm text-rose-300"
+            >
+              Issue a new invitation (owner only)
+            </button>
+            <p className="text-xs text-slate-400">
+              Issuing a new invitation invalidates the previous invitation for
+              new members. Existing members keep access.
+            </p>
+            {members.map((m) => (
+              <div key={m.id} className="flex justify-between text-xs gap-3">
+                <span>
+                  {m.name} ({m.email})
+                </span>
+                <button onClick={() => void revoke(m.id)}>Remove member</button>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch font-sans">
-                {/* Option A: Create Room */}
-                <button
-                  type="button"
-                  onClick={onCreateRoom}
-                  className="p-5 rounded-xl bg-rose-950/30 hover:bg-rose-950/40 border border-rose-500/20 text-left flex flex-col justify-between transition-all group cursor-pointer font-sans"
-                >
-                  <PlusCircle className="w-6 h-6 text-rose-400 group-hover:scale-105 transition-transform" />
-                  <div className="mt-4 font-sans">
-                    <h4 className="font-bold text-xs text-white font-sans">Start a New Room</h4>
-                    <p className="text-[10px] text-slate-450 mt-1 leading-normal font-medium font-sans">Get a new 6-digit room code to share.</p>
-                  </div>
-                </button>
-
-                {/* Option B: Join Room Area form */}
-                <form 
-                  onSubmit={handleJoin}
-                  className="p-5 rounded-xl bg-slate-950 border border-slate-800 text-left flex flex-col justify-between transition-all font-sans"
-                >
-                  <div className="space-y-1 w-full font-sans">
-                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1 font-sans">Enter Code</label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      placeholder="e.g. 581290"
-                      value={roomCodeInput}
-                      onChange={(e) => {
-                        setRoomCodeInput(e.target.value.replace(/\D/g, ""));
-                        if (errorText) setErrorText("");
-                      }}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-center text-sm font-mono tracking-widest font-black text-white outline-none focus:border-rose-500 transition-all font-sans"
-                    />
-                    {errorText && (
-                      <p className="text-[10px] text-rose-455 font-semibold mt-1.5 leading-tight font-sans">
-                        ⚠ {errorText}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full mt-4 py-2 bg-rose-700 text-white hover:bg-rose-605 text-[10px] uppercase font-bold tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-rose-700/30"
-                  >
-                    <DoorOpen className="w-3.5 h-3.5" />
-                    <span>Join Room</span>
-                  </button>
-                </form>
-              </div>
-            </div>
-          ) : (
-            // Swapped Collaborative details panel if already active
-            <div className="space-y-4">
-              <div className="p-4.5 rounded-xl border border-slate-800 bg-slate-950/50 flex items-center justify-between gap-4">
-                <div>
-                  <span className="text-[9px] font-bold text-slate-450 uppercase tracking-widest font-semibold">Active Hub ID</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <h5 className="text-xl font-bold font-mono tracking-widest text-white">{roomId}</h5>
-                    <button
-                      onClick={handleCopyCode}
-                      className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white cursor-pointer"
-                      title="Copy join link"
-                    >
-                      {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={onDisconnectRoom}
-                  className="px-4 py-2 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 text-xs font-bold rounded-xl transition-all cursor-pointer font-sans"
-                >
-                  Leave Room
-                </button>
-              </div>
-
-              {/* Server Activity Log Tracker */}
-              <div className="border border-slate-800 rounded-xl overflow-hidden flex flex-col h-48 bg-slate-950/30">
-                <div className="bg-slate-950 px-4 py-2 text-[9px] font-bold text-slate-455 uppercase tracking-widest border-b border-slate-800 flex items-center gap-2 font-sans">
-                  <Activity className="w-3.5 h-3.5 text-rose-450 animate-pulse" />
-                  <span>Live Updates</span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-2.5 font-sans">
-                  {roomDetails?.history && roomDetails.history.map((log) => (
-                    <div key={log.id} className="text-[10.5px] leading-relaxed border-b border-slate-850 pb-2 last:border-0 last:pb-0 font-sans">
-                      <div className="flex justify-between items-center text-slate-400 mb-0.5">
-                        <span className="font-bold text-slate-300">{log.userName} ({log.userEmail.split("@")[0]})</span>
-                        <span className="font-mono text-[9px] text-rose-400">{log.timestamp.slice(11, 16)}</span>
-                      </div>
-                      <p className="text-slate-400 font-medium font-sans">{log.action}</p>
-                    </div>
-                  ))}
-
-                  {(!roomDetails?.history || roomDetails.history.length === 0) && (
-                    <div className="h-full flex items-center justify-center text-slate-500 italic text-[11px] font-medium font-sans">
-                      No updates yet.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+            ))}
+            <button
+              onClick={onDisconnectRoom}
+              className="block border border-slate-700 rounded p-2"
+            >
+              Return to personal workspace
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={onCreateRoom}
+              className="w-full bg-rose-700 rounded-xl p-3"
+            >
+              Create a shared copy
+            </button>
+            {rooms.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => onJoinRoom(r.id)}
+                className="block w-full text-left text-xs text-slate-300 p-2 rounded border border-slate-700"
+              >
+                Open saved workspace {r.id.slice(0, 8)}{" "}
+                {r.owner ? "(owner)" : ""}
+              </button>
+            ))}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!/^[-a-f0-9]{36}\.[a-f0-9]{64}$/.test(code.trim())) {
+                  setError("Paste the complete private invitation.");
+                  return;
+                }
+                onJoinRoom(code.trim());
+              }}
+              className="space-y-3"
+            >
+              <label className="block text-sm">
+                Private invitation
+                <input
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  required
+                  maxLength={101}
+                  className="block w-full bg-slate-950 rounded p-3 mt-2"
+                />
+              </label>
+              <button className="w-full border border-slate-700 rounded p-3">
+                Join shared workspace
+              </button>
+            </form>
+          </>
+        )}
+        {error && (
+          <p role="alert" className="text-sm text-rose-300">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

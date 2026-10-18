@@ -2,7 +2,5 @@
   "name": "Cash Diet",
   "description": "An automated collaborative Cash Diet tracker with 90-day cashflow models.",
   "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "majorCapabilities": []
 }

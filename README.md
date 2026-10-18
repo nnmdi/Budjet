@@ -1,21 +1,19 @@
 # Cash Diet
 
-A personal finance prototype for tracking budgets, recording income and expenses, importing CSV statements, and exploring cashflow scenarios.
+A personal finance app for budgets, transactions, recurring bills, CSV statements, and what-if cashflow scenarios. Built with React 19, TypeScript, Vite, Tailwind CSS, Express, and SQLite.
 
-## Current implementation
+The ledger derives balances from opening balances and posted transactions using cent-based arithmetic. Future entries stay scheduled until due. Imports, deletion across budgets, and full undo/redo use the same ledger rules on the client and server.
 
-- React 19, TypeScript, Vite, Tailwind CSS, and Express.
-- Budgets, transaction history, savings targets, and a recurring bills checklist.
-- CSV import with column mapping and a local Naive Bayes category classifier.
-- What-if calculator, experimental cashflow forecasts, and statistical spending alerts.
-- Browser storage for personal data; optional shared rooms through Express and Server-Sent Events.
-- GitHub Pages deployment for the static personal-budget interface.
+## Two ways to use it
 
-**Prototype limitations:** login profiles and passwords currently live in browser storage, and shared rooms do not enforce server-side authentication. Forecasts can use synthetic history when records are sparse. Do not treat the current login as secure account protection or the forecast as a validated prediction. See the [code review and prioritized roadmap](docs/CASH_DIET_REVIEW.md) for findings and reproduction results.
+- **GitHub Pages:** browser-only local profiles with full JSON backup/restore. Profiles have no passwords or access protection and stay in that browser.
+- **Hosted backend:** server accounts with salted password hashes, HttpOnly sessions, durable SQLite records, and authenticated private rooms. Requires HTTPS and a persistent data volume in production.
 
-This repository does not currently include the separate FastAPI services, PostgreSQL, or Plaid bank connection code.
+The repository remains `nnmdi/Budjet` and the Pages path remains `/Budjet/`; Cash Diet is the application name. Existing personal data migrates using the same profile email and origin. Old local passwords do not become server credentials.
 
-## Local development
+## Development
+
+Requires Node 22.16 or later.
 
 ```bash
 git clone https://github.com/nnmdi/Budjet.git cash-diet
@@ -24,24 +22,21 @@ npm ci
 npm run dev
 ```
 
-The development server listens on port 3000.
+Open `http://localhost:3000`. Development data lives in the git-ignored `data/` directory.
 
 ```bash
+npm test
 npm run lint
 npm run build
-NODE_ENV=production npm start
+NODE_ENV=production APP_URL=https://your-real-origin DATA_DIR=/private/persistent/cash-diet npm start
 ```
 
-`npm run lint` currently runs TypeScript checking; it does not run ESLint or functional tests.
+Production requires an HTTPS origin and persistent DATA_DIR. See [ledger, migration, security, deployment, and backup details](docs/LEDGER_AND_SECURITY.md) before deploying. The backend has not been deployed by this code update. Email verification, recovery, and production security/operations checks remain before a public account service or real banking.
 
 ## GitHub Pages
 
-Run `npm run build:pages` to build the static frontend. The **Publish Cash Diet to GitHub Pages** workflow builds and deploys pushes to `main`. Enable **Settings → Pages → Source → GitHub Actions**.
+`npm run build:pages` builds the static site. The **Publish Cash Diet to GitHub Pages** workflow tests, type-checks, builds, and deploys pushes to main. Enable **Settings → Pages → Source → GitHub Actions**.
 
-The current repository URL is `https://github.com/nnmdi/Budjet`, and its Pages path is `https://nnmdi.github.io/Budjet/`. Cash Diet is the application name; the repository slug and Pages base path remain `Budjet` so existing links keep working. Existing browser-storage keys also remain compatible with saved data.
+Site: `https://nnmdi.github.io/Budjet/`. Leave VITE_API_BASE_URL empty for local profiles, or configure a real HTTPS account API and its credentialed CORS/cookie settings as described in the deployment guide. No secrets belong in VITE variables.
 
-Personal budgets save in the current browser and origin. Data from another domain does not transfer automatically. The CSV export/import flow transfers transaction rows, not a complete account backup.
-
-Shared rooms require a running Express API. `VITE_API_BASE_URL` configures an external API origin for a Pages build, but the current server still needs an explicit CORS implementation for cross-origin use. The standalone Pages build calculates anomaly alerts locally. Never put secret keys in `VITE_*` variables.
-
-`robots.txt` and `noindex` request search-engine exclusion; they do not restrict access.
+Forecasts are experimental, not validated predictions. JSON export is a complete ledger backup; CSV is a transaction interchange format. There is no Plaid or separate FastAPI implementation in this repository. The [original review](docs/CASH_DIET_REVIEW.md) documents the baseline issues; the update guide describes what has changed and what remains.

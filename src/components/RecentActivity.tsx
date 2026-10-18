@@ -1,15 +1,16 @@
-import { 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Smile, 
-  Trash2, 
-  Search, 
-  Download, 
-  FileText, 
-  Filter, 
-  CircleDot, 
+import { stringifyCSV } from "../domain/csv";
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  Smile,
+  Trash2,
+  Search,
+  Download,
+  FileText,
+  Filter,
+  CircleDot,
   BadgeAlert,
-  Upload
+  Upload,
 } from "lucide-react";
 import { useState } from "react";
 import { Transaction } from "../types";
@@ -21,7 +22,10 @@ interface RecentActivityProps {
   mode: "dashboard" | "budget-view";
   selectedBudgetFilter?: string; // Optional: restrict to a single budget
   onDeleteTransactions?: (ids: string[]) => void;
-  onImportTransactions?: (importedTx: Transaction[], newBudgetsToCreate: string[]) => void;
+  onImportTransactions?: (
+    importedTx: Transaction[],
+    newBudgetsToCreate: string[],
+  ) => void;
   existingBudgetNames?: string[];
 }
 
@@ -33,7 +37,6 @@ export default function RecentActivity({
   onImportTransactions,
   existingBudgetNames,
 }: RecentActivityProps) {
-  
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isImporting, setIsImporting] = useState(false);
@@ -42,8 +45,9 @@ export default function RecentActivity({
   const filtered = transactions
     .filter((tx) => {
       // Filter by sub budget if specified
-      if (selectedBudgetFilter && tx.budget !== selectedBudgetFilter) return false;
-      
+      if (selectedBudgetFilter && tx.budget !== selectedBudgetFilter)
+        return false;
+
       // Filter by search query
       if (searchQuery.trim() !== "") {
         const query = searchQuery.toLowerCase();
@@ -61,7 +65,7 @@ export default function RecentActivity({
   // Handle single checklist toggle
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -75,41 +79,60 @@ export default function RecentActivity({
 
   // Export full CSV format statement
   const triggerCSVExport = () => {
-    const headers = "Budget,Date,Type,Amount,Description,Recurrence\n";
-    const rows = filtered
-      .map((tx) => `${tx.budget},${tx.date},${tx.type},${tx.amount},"${tx.description}",${tx.recurrence}`)
-      .join("\n");
-    
-    const blob = new Blob([headers + rows], { type: "text/csv" });
+    const csv = stringifyCSV([
+      ["Budget", "Date", "Type", "Amount", "Description", "Recurrence"],
+      ...filtered.map((tx) => [
+        tx.budget,
+        tx.date,
+        tx.type,
+        tx.amount,
+        tx.description,
+        tx.recurrence,
+      ]),
+    ]);
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.setAttribute("href", url);
-    a.setAttribute("download", `budget_statement_${selectedBudgetFilter || "all"}.csv`);
+    a.setAttribute(
+      "download",
+      `budget_statement_${selectedBudgetFilter || "all"}.csv`,
+    );
     a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (mode === "dashboard") {
     // Mode 1: Dashboard Sidecard representation (Screenshot 1)
     return (
-      <div id="recent-activity-dashboard" className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+      <div
+        id="recent-activity-dashboard"
+        className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between"
+      >
         <div>
-          <h3 className="text-base font-bold text-white tracking-tight mb-4">Recent Activity</h3>
-          
+          <h3 className="text-base font-bold text-white tracking-tight mb-4">
+            Recent Activity
+          </h3>
+
           <div className="space-y-4 font-sans">
             {filtered.slice(0, 4).map((tx, idx) => {
               const isProfit = tx.type === "profit";
               const isApple = tx.description.toLowerCase().includes("apple");
-              const isStarbucks = tx.description.toLowerCase().includes("starbucks");
+              const isStarbucks = tx.description
+                .toLowerCase()
+                .includes("starbucks");
               const isSalary = tx.description.toLowerCase().includes("salary");
 
               // Determine icon and status colors mimicking mockup design
               let iconBg = "bg-rose-500/10 border-rose-500/20 text-rose-400";
               let icon = <ArrowDownLeft className="w-5 h-5" />;
               let statusText = "CLEARED";
-              let statusBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+              let statusBg =
+                "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
 
               if (isProfit) {
-                iconBg = "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+                iconBg =
+                  "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
                 icon = <ArrowUpRight className="w-5 h-5" />;
               }
 
@@ -119,13 +142,25 @@ export default function RecentActivity({
               }
 
               return (
-                <div key={tx.id || idx} className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800 last:border-b-0 last:pb-0">
+                <div
+                  key={tx.id || idx}
+                  className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800 last:border-b-0 last:pb-0"
+                >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-full border ${iconBg} shrink-0`}>
+                    <div
+                      className={`p-2.5 rounded-full border ${iconBg} shrink-0`}
+                    >
                       {icon}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-white truncate">{tx.description}</p>
+                      <p className="text-sm font-bold text-white truncate">
+                        {tx.description}
+                        {tx.status === "scheduled" && (
+                          <span className="ml-2 text-amber-300 text-xs">
+                            Scheduled
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-slate-400 font-sans mt-0.5">
                         {tx.budget} • {tx.date.slice(5, 16)}
                       </p>
@@ -133,10 +168,15 @@ export default function RecentActivity({
                   </div>
 
                   <div className="text-right shrink-0">
-                    <p className={`text-sm font-bold tracking-tight font-mono ${isProfit ? "text-emerald-400" : "text-rose-400"}`}>
-                      {isProfit ? "+" : "-"}{formatCurrency(tx.amount)}
+                    <p
+                      className={`text-sm font-bold tracking-tight font-mono ${isProfit ? "text-emerald-400" : "text-rose-400"}`}
+                    >
+                      {isProfit ? "+" : "-"}
+                      {formatCurrency(tx.amount)}
                     </p>
-                    <span className={`inline-block px-1.5 py-0.5 rounded border text-[9px] font-bold mt-1 tracking-wider ${statusBg}`}>
+                    <span
+                      className={`inline-block px-1.5 py-0.5 rounded border text-[9px] font-bold mt-1 tracking-wider ${statusBg}`}
+                    >
                       {statusText}
                     </span>
                   </div>
@@ -146,13 +186,14 @@ export default function RecentActivity({
 
             {filtered.length === 0 && (
               <div className="py-6 text-center text-sm text-slate-400 font-sans">
-                No recent transactions logged yet. Move to active budgets to add records.
+                No recent transactions logged yet. Move to active budgets to add
+                records.
               </div>
             )}
           </div>
         </div>
 
-        <button 
+        <button
           onClick={triggerCSVExport}
           id="btn-download-statement"
           className="w-full mt-6 py-2.5 px-4 bg-slate-800 border border-slate-700/60 hover:bg-slate-750 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
@@ -179,17 +220,22 @@ export default function RecentActivity({
   }
 
   return (
-    <div id="recent-activity-tabular" className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+    <div
+      id="recent-activity-tabular"
+      className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm"
+    >
       {/* Table search & Actions Header bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-4">
-        <h4 className="text-base font-bold text-white tracking-tight">Recent Activity</h4>
-        
+        <h4 className="text-base font-bold text-white tracking-tight">
+          Recent Activity
+        </h4>
+
         <div className="flex flex-wrap items-center gap-2">
           {/* Detailed keyword finder input */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search transactions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -197,8 +243,8 @@ export default function RecentActivity({
             />
           </div>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => setSearchQuery("")}
             className="p-2 text-slate-400 hover:text-white bg-slate-950 hover:bg-slate-850 rounded-xl border border-slate-800 transition-colors cursor-pointer"
             title="Clear Search Filters"
@@ -246,7 +292,10 @@ export default function RecentActivity({
                 <th className="p-3 w-10">
                   <input
                     type="checkbox"
-                    checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                    checked={
+                      filtered.length > 0 &&
+                      selectedIds.length === filtered.length
+                    }
                     onChange={(e) => {
                       if (e.target.checked) {
                         setSelectedIds(filtered.map((t) => t.id));
@@ -270,8 +319,8 @@ export default function RecentActivity({
               const checked = selectedIds.includes(tx.id);
               const isProfit = tx.type === "profit";
               return (
-                <tr 
-                  key={tx.id} 
+                <tr
+                  key={tx.id}
                   className={`hover:bg-slate-850/40 transition-all ${checked ? "bg-rose-950/20" : ""}`}
                 >
                   {onDeleteTransactions && (
@@ -284,21 +333,41 @@ export default function RecentActivity({
                       />
                     </td>
                   )}
-                  <td className="p-3 font-mono text-slate-400">{tx.date.slice(0, 16)}</td>
+                  <td className="p-3 font-mono text-slate-400">
+                    {tx.date.slice(0, 16)}
+                  </td>
                   <td className="p-3 font-semibold text-white">
-                    <span className="block">{tx.description}</span>
-                    <span className="text-[10px] text-slate-500 font-normal sm:hidden">{tx.budget}</span>
+                    <span className="block">
+                      {tx.description}
+                      {tx.status === "scheduled" && (
+                        <span className="ml-2 text-amber-300 text-xs">
+                          Scheduled
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-normal sm:hidden">
+                      {tx.budget}
+                    </span>
                   </td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                      isProfit ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                        isProfit
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      }`}
+                    >
                       {tx.type.toUpperCase()}
                     </span>
                   </td>
-                  <td className="p-3 text-slate-450 capitalize">{tx.recurrence}</td>
-                  <td className={`p-3 text-right font-mono font-semibold ${isProfit ? "text-emerald-400" : "text-rose-400"}`}>
-                    {isProfit ? "+" : "-"}{formatCurrency(tx.amount)}
+                  <td className="p-3 text-slate-450 capitalize">
+                    {tx.recurrence}
+                  </td>
+                  <td
+                    className={`p-3 text-right font-mono font-semibold ${isProfit ? "text-emerald-400" : "text-rose-400"}`}
+                  >
+                    {isProfit ? "+" : "-"}
+                    {formatCurrency(tx.amount)}
                   </td>
                 </tr>
               );
@@ -306,7 +375,10 @@ export default function RecentActivity({
 
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-slate-400 font-sans italic bg-slate-900">
+                <td
+                  colSpan={6}
+                  className="p-8 text-center text-slate-400 font-sans italic bg-slate-900"
+                >
                   No matching transaction activity registered in the timeline.
                 </td>
               </tr>
@@ -316,7 +388,15 @@ export default function RecentActivity({
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-slate-500 font-sans mt-3 border-t border-slate-800 pt-3">
-        <span>Showing {filtered.length} of {transactions.filter(t => !selectedBudgetFilter || t.budget === selectedBudgetFilter).length} total logs</span>
+        <span>
+          Showing {filtered.length} of{" "}
+          {
+            transactions.filter(
+              (t) => !selectedBudgetFilter || t.budget === selectedBudgetFilter,
+            ).length
+          }{" "}
+          total logs
+        </span>
         <span>My Money Journal v2.4.1</span>
       </div>
     </div>

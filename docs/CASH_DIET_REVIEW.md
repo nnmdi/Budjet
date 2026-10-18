@@ -2,6 +2,10 @@
 
 Reviewed October 18, 2026. Source baseline: `05a4dc5` on `nnmdi/Budjet/main`.
 
+## Implementation update
+
+This document records the original baseline. The ledger and account/storage fixes are implemented in the [update guide](LEDGER_AND_SECURITY.md), which supersedes its descriptions of those behaviors. Remaining production and forecasting work is listed there. The new code has not provisioned a hosted backend or connected real banks.
+
 ## Verdict
 
 Cash Diet is a useful personal-finance prototype with substantial frontend functionality. It is not ready for secure, multi-user financial records. The highest-value next work is a trustworthy ledger and honest local-profile experience, followed by authenticated durable storage. Adding bank connections before these foundations would amplify existing balance and privacy problems.
