@@ -5,22 +5,22 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Matcha accent palette. */
-  --color-rose-50: #f3f5eb;
-  --color-rose-100: #e3e9d3;
-  --color-rose-200: #cdd9b5;
-  --color-rose-300: #b8c993;
-  --color-rose-400: #a9bd83;
-  --color-rose-450: #a9bd83;
-  --color-rose-455: #c5d5a7;
-  --color-rose-500: #8fa96a;
-  --color-rose-600: #607c45;
-  --color-rose-605: #58723f;
-  --color-rose-650: #506c38;
-  --color-rose-700: #466334;
-  --color-rose-800: #354a2a;
-  --color-rose-900: #283723;
-  --color-rose-950: #1b281a;
+  /* Forest green accent palette. */
+  --color-rose-50: #f4faf7;
+  --color-rose-100: #e2f2ea;
+  --color-rose-200: #bfe3d2;
+  --color-rose-300: #9fd7bd;
+  --color-rose-400: #8ed3b2;
+  --color-rose-450: #8ed3b2;
+  --color-rose-455: #faf9f3;
+  --color-rose-500: #52b68a;
+  --color-rose-600: #237a56;
+  --color-rose-605: #1e6c4c;
+  --color-rose-650: #196245;
+  --color-rose-700: #14543c;
+  --color-rose-800: #124631;
+  --color-rose-900: #103526;
+  --color-rose-950: #0a261c;
 
   /* Dynamically bind Slate shades via CSS custom properties */
   --color-slate-50: var(--slate-50);
@@ -44,23 +44,23 @@
 }
 
 :root {
-  /* Sumi charcoal, warm rice paper, and natural wood neutrals. */
-  --slate-50: #191b16;
-  --slate-100: #20231c;
-  --slate-150: #292d23;
-  --slate-200: #383d30;
-  --slate-300: #c0c2b4;
-  --slate-400: #aaaD9e;
-  --slate-450: #b7baab;
-  --slate-500: #b3b6a6;
-  --slate-600: #d8d9cc;
-  --slate-705: #f4efdf;
-  --slate-700: #e1dece;
-  --slate-800: #353a2e;
-  --slate-850: #292d24;
-  --slate-900: #22261f;
-  --slate-950: #161a15;
-  --white-theme: #f8f3e6;
+  /* Deep forest surfaces and crisp ivory typography. */
+  --slate-50: #0d211a;
+  --slate-100: #102a21;
+  --slate-150: #16372b;
+  --slate-200: #24513f;
+  --slate-300: #c0d8cc;
+  --slate-400: #a5c2b3;
+  --slate-450: #b4cec0;
+  --slate-500: #adc5b9;
+  --slate-600: #dce8df;
+  --slate-705: #faf9f3;
+  --slate-700: #e2ede5;
+  --slate-800: #24503e;
+  --slate-850: #15382b;
+  --slate-900: #103025;
+  --slate-950: #071e16;
+  --white-theme: #faf9f3;
 }
 
 /* Specific Focus-Mode Spacing overrides to create separation between elements */
@@ -94,12 +94,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #454c3b;
+  background: #315d49;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #607c45;
+  background: #237a56;
 }
 
 /* Tabular figures OpenType config */
@@ -186,45 +186,52 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--color-rose-400)
 /* Bento compartments share one material, radius and motion language. */
 :root { --bento-ease: cubic-bezier(.22, 1, .36, 1); }
 body { margin: 0; }
-::selection { background: #607c45; color: #fff9ec; }
-#application-container { background-image: radial-gradient(ellipse at 85% 0%, #39412a40, transparent 55%); }
+::selection { background: #237a56; color: #faf9f3; }
+#application-container { background-image: radial-gradient(ellipse at 85% 0%, #29745133, transparent 55%); }
 #app-main { max-width: 1680px; margin-inline: auto; }
-#app-sidebar { background-color: #1c211a; border-color: #39412f; }
+#app-sidebar { background-color: #09271c; border-color: #28513d; }
 #brand-title, #view-title { font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-spacing: -.035em; }
 #brand-title { font-size: 23px; }
 #view-title { font-size: clamp(1.8rem, 3vw, 2.5rem); }
 #brand-subtitle { letter-spacing: .16em; font-size: 8px; }
-#tab-nav-header { padding-block: 1.25rem; border-bottom: 1px solid #39412f; margin-bottom: 1.75rem; }
+#tab-nav-header { padding-block: 1.25rem; border-bottom: 1px solid #28513d; margin-bottom: 1.75rem; }
 #sidebar-nav { display: grid; gap: .5rem; }
-#sidebar-nav button[aria-current="page"] { background: #d0dcb2; color: #26351f; border-color: #d0dcb2; box-shadow: none; }
-#sidebar-nav button[aria-current="page"] svg { color: #466334; }
-#sidebar-nav button[aria-current="page"] > span:last-child:not(:first-of-type) { animation: none; background: #466334; }
-.bento-mark { display: grid; grid-template-columns: 1.3fr 1fr; grid-template-rows: 1fr 1fr; gap: 3px; padding: 7px; width: 38px; height: 38px; background: #c5d5a7; border-radius: 11px; flex-shrink: 0; }
-.bento-mark i { background: #466334; border-radius: 3px; }
+#sidebar-nav button[aria-current="page"] { background: #faf9f3; color: #0c3b29; border-color: #faf9f3; box-shadow: none; }
+#sidebar-nav button[aria-current="page"] svg { color: #14543c; }
+#sidebar-nav button[aria-current="page"] > span:last-child:not(:first-of-type) { animation: none; background: #14543c; }
+.bento-mark { display: grid; grid-template-columns: 1.3fr 1fr; grid-template-rows: 1fr 1fr; gap: 3px; padding: 7px; width: 38px; height: 38px; background: #faf9f3; border-radius: 11px; flex-shrink: 0; }
+.bento-mark i { background: #14543c; border-radius: 3px; }
 .bento-mark i:first-child { grid-row: span 2; }
-.bento-mark i:last-child { background: #af6348; }
+.bento-mark i:last-child { background: #cc7853; }
 #dashboard-statistics { gap: 1rem; }
-#dashboard-statistics > div { border-radius: 24px; border: 1px solid #424b35; height: auto; min-height: 178px; padding: 1.5rem; }
-#dashboard-statistics > div:first-child { background: #c5d5a7; color: #26351f; }
-#dashboard-statistics > div:first-child :is(h3, span) { color: #26351f; }
-#dashboard-statistics > div:first-child svg { color: #466334; }
-#dashboard-statistics > div:nth-child(2) { background: #372b22; border-color: #644735; }
+#dashboard-statistics > div { border-radius: 24px; border: 1px solid #2b5742; height: auto; min-height: 178px; padding: 1.5rem; }
+#dashboard-statistics > div:first-child { background: #faf9f3; color: #0c3b29; }
+#dashboard-statistics > div:first-child :is(h3, span) { color: #0c3b29; }
+#dashboard-statistics > div:first-child svg { color: #14543c; }
+#dashboard-statistics > div:nth-child(2) { background: #153d2d; border-color: #356449; }
 #active-budgets-grid { gap: 1rem; }
 #active-budgets-grid > div { border-radius: 24px; padding: 1.5rem; background-image: linear-gradient(135deg, #ffffff03, transparent); }
-#active-budgets-grid > div:nth-child(3n + 2) { background-color: #2d2a21; border-color: #4b4331; }
-#active-budgets-grid > div:nth-child(3n) { background-color: #242d26; border-color: #3b4b3e; }
+#active-budgets-grid > div:nth-child(3n + 2) { background-color: #123c2c; border-color: #2c5943; }
+#active-budgets-grid > div:nth-child(3n) { background-color: #0d3528; border-color: #285740; }
 :is(#projection-insights-card, #recent-activity-dashboard, #recent-activity-tabular, #due-today-panel, #import-module-panel, #selection-financial-base, #scenario-builder, #hypothetical-projection) { border-radius: 24px; overflow: hidden; }
-#btn-header-add-transaction { background: #c5d5a7; color: #26351f; border-radius: 12px; }
-#alert-advisor-tip { background: #2a3024; border-color: #48523b; border-radius: 20px; }
-#alert-advisor-tip :is(p, span, svg) { color: #c5d5a7; }
+#btn-header-add-transaction { background: #faf9f3; color: #0c3b29; border-radius: 12px; }
+#alert-advisor-tip { background: #153e2d; border-color: #356449; border-radius: 20px; }
+#alert-advisor-tip :is(p, span, svg) { color: #faf9f3; }
 button, a, input, select, textarea { transition: background-color 220ms var(--bento-ease), border-color 220ms var(--bento-ease), color 220ms var(--bento-ease), box-shadow 220ms var(--bento-ease), transform 220ms var(--bento-ease); }
 button:enabled:active { transform: translateY(1px); }
-input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #a9bd83; outline-offset: 3px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #8ed3b2; outline-offset: 3px; }
 #active-budgets-grid > div { transition: transform 280ms var(--bento-ease), border-color 280ms var(--bento-ease), box-shadow 280ms var(--bento-ease); }
-@media (hover: hover) { #active-budgets-grid > div:hover { transform: translateY(-3px); border-color: #8fa96a; box-shadow: 0 12px 28px #00000020; } }
+@media (hover: hover) { #active-budgets-grid > div:hover { transform: translateY(-3px); border-color: #52b68a; box-shadow: 0 12px 28px #00000020; } }
 @keyframes bento-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .bento-workspace { animation: bento-enter 320ms var(--bento-ease) both; }
 #application-container > .fixed.inset-0 > div, #auth-card { animation: bento-enter 260ms var(--bento-ease) both; }
 @media (min-width: 1280px) { #dashboard-statistics { grid-template-columns: 1.25fr 1fr 1fr; } }
 @media (max-width: 639px) { #dashboard-statistics > div { min-height: 154px; } #active-budgets-grid > div { padding: 1.25rem; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+/* Ivory highlights echo porcelain compartments against forest lacquer. */
+#dashboard-statistics > div:first-child { box-shadow: 0 8px 32px #00000012; }
+#dashboard-statistics > div:first-child > div:first-child > div:last-child { background: #14543c0d; border-color: #14543c26; }
+#btn-header-add-transaction:hover { background: #e2f2ea; box-shadow: 0 4px 16px #00000020; }
+#sidebar-nav button[aria-current="page"]:hover { background: #e2f2ea; }
+#application-container .bg-rose-700:hover, #auth-card .bg-rose-700:hover { background-color: #237a56; }
