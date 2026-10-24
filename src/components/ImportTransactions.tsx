@@ -563,7 +563,7 @@ export default function ImportTransactions({
             {/* Column Mapper unit */}
             <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl space-y-3.5 col-span-2">
               <div className="flex items-center gap-1.5 border-b border-slate-850 pb-2">
-                <FileSpreadsheet className="w-4 h-4 text-[#60a5fa]" />
+                <FileSpreadsheet className="w-4 h-4 text-[#c4b085]" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-white">
                   Column Mapping Settings
                 </h4>

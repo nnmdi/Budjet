@@ -415,7 +415,7 @@ export default function SmartProjections({
 
         <div className="max-w-3xl space-y-2 z-10 relative">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded bg-[#0058be]/25 border border-[#3b8bf7]/30 text-[#60a5fa] font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+            <span className="px-2.5 py-1 rounded bg-[#756345]/25 border border-[#c4b085]/30 text-[#c4b085] font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5" /> Experimental forecast
             </span>
             {!metrics.hasEnoughData && (
@@ -521,7 +521,7 @@ export default function SmartProjections({
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-5">
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-750 pb-3">
-              <Sliders className="w-4.5 h-4.5 text-[#60a5fa]" />
+              <Sliders className="w-4.5 h-4.5 text-[#c4b085]" />
               <h4 className="font-bold text-xs text-white uppercase tracking-widest font-sans">
                 Change Settings
               </h4>
@@ -611,7 +611,7 @@ export default function SmartProjections({
                 step={250}
                 value={simulationStress}
                 onChange={(e) => setSimulationStress(Number(e.target.value))}
-                className="w-full accent-[#60a5fa] cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none"
+                className="w-full accent-[#c4b085] cursor-pointer h-1.5 bg-slate-950 rounded-lg appearance-none"
               />
               <div className="flex justify-between text-[8px] text-slate-450 font-bold font-mono">
                 <span>-$3K/mo</span>
@@ -681,7 +681,7 @@ export default function SmartProjections({
           <div className="flex items-center justify-between border-b border-slate-150 pb-3 mb-2">
             <div>
               <h4 className="font-bold text-xs text-white uppercase tracking-widest flex items-center gap-1.5 font-sans">
-                <Clock className="w-3.5 h-3.5 text-[#60a5fa]" /> Our Guessing
+                <Clock className="w-3.5 h-3.5 text-[#c4b085]" /> Our Guessing
                 Map
               </h4>
               <p className="text-[10px] text-slate-400 font-sans">
@@ -885,7 +885,7 @@ export default function SmartProjections({
             {/* Float Tooltip Drawer */}
             {activeTooltip && (
               <div
-                className="absolute z-40 bg-[#0f172a] text-white rounded-lg p-3 text-[10.5px] border border-slate-700 shadow-xl pointer-events-none space-y-1 w-44 font-sans"
+                className="absolute z-40 bg-[#22261f] text-white rounded-lg p-3 text-[10.5px] border border-slate-700 shadow-xl pointer-events-none space-y-1 w-44 font-sans"
                 style={{
                   left: `${(activeTooltip.x / width) * 100}%`,
                   top: `${Math.min(height - 110, Math.max(10, activeTooltip.y - 100))}`,

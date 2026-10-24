@@ -107,7 +107,7 @@ export default function Sidebar({
         className="lg:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md"
       >
         <span className="font-bold text-white">
-          🍽️ Cash Diet <span className="text-[10px] text-rose-400">BETA</span>
+          🍱 Cash Diet <span className="text-[10px] text-rose-400">BETA</span>
         </span>
         <button
           ref={menuButton}
@@ -143,9 +143,7 @@ export default function Sidebar({
           </button>
           {/* Brand Header */}
           <div id="brand-header" className="mb-8 flex items-center gap-3 px-1">
-            <div className="w-9 h-9 bg-rose-700 rounded-lg flex items-center justify-center font-bold text-[#050a18] shadow-md shadow-rose-700/35 shrink-0">
-              🍽️💵
-            </div>
+            <div className="bento-mark" aria-hidden="true"><i /><i /><i /></div>
             <div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <h1

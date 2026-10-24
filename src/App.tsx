@@ -549,7 +549,7 @@ export default function App() {
   // --- Auth Wall Gate ---
   if (!userEmail && !isGuestMode) {
     return (
-      <div className="min-h-screen bg-[#070b13] flex items-center justify-center">
+      <div className="min-h-screen bg-[#161a15] flex items-center justify-center">
         <AuthOverlay
           onLogin={handleLogin}
           onGuest={() => {
@@ -742,6 +742,7 @@ export default function App() {
         </header>
 
         {/* --- ROUTED WORKSPACE VIEWS --- */}
+        <div className="bento-workspace" key={`${currentTab}-${activeBudgetFilter ?? "all"}`}>
 
         {currentTab === "calculator" ? (
           <Calculator budgets={budgets} />
@@ -805,7 +806,7 @@ export default function App() {
             {/* Dark balance detail card header */}
             <div
               id="budget-detail-card"
-              className="bg-[#131b2e] rounded-lg p-6 text-white border border-[#213145] shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6"
+              className="bg-[#292d24] rounded-lg p-6 text-white border border-[#454c3b] shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6"
             >
               <div className="space-y-3 z-10 flex-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">
@@ -1113,7 +1114,7 @@ export default function App() {
 
                   {/* Progressive Recurrence Parameters Dashboard */}
                   {txRecurrence !== "one-time" && (
-                    <div className="grid grid-cols-2 gap-3 bg-[#0a0f20] border border-slate-850 p-2.5 rounded-lg animate-fadeIn text-[10px]">
+                    <div className="grid grid-cols-2 gap-3 bg-[#20251c] border border-slate-850 p-2.5 rounded-lg animate-fadeIn text-[10px]">
                       {txRecurrence === "custom-weeks" ? (
                         <div className="space-y-1">
                           <label className="font-bold text-slate-400 uppercase tracking-widest text-[8px] block">
@@ -1362,7 +1363,7 @@ export default function App() {
               </div>
 
               {/* Monthly Spend tracker */}
-              <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-sm border-l-4 border-l-[#ff6b6b] flex flex-col justify-between h-40">
+              <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-sm border-l-4 border-l-[#e29a7a] flex flex-col justify-between h-40">
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sans">
@@ -1372,7 +1373,7 @@ export default function App() {
                       {formatCurrency(monthlySpendTotal)}
                     </h3>
                   </div>
-                  <div className="p-3 bg-red-500/10 text-[#ff6b6b] rounded border border-red-500/20">
+                  <div className="p-3 bg-red-500/10 text-[#e29a7a] rounded border border-red-500/20">
                     <TrendingDown className="w-5.5 h-5.5" />
                   </div>
                 </div>
@@ -1482,11 +1483,12 @@ export default function App() {
             </div>
           </div>
         )}
+        </div>
       </main>
 
       {/* Quick Create Budget Modal Overlay */}
       {showQuickCreate && (
-        <div className="fixed inset-0 z-50 bg-[#040817]/75 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-[#10140f]/75 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-slate-900 max-w-sm w-full p-6 rounded-xl border border-slate-800 shadow-2xl space-y-4 font-sans text-xs">
             <h4 className="font-bold text-base text-white leading-snug">
               Create Structural Budget
@@ -1535,7 +1537,7 @@ export default function App() {
 
       {/* Quick Rename Budget Modal Overlay */}
       {showQuickRename && (
-        <div className="fixed inset-0 z-50 bg-[#040817]/75 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-[#10140f]/75 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-slate-900 max-w-sm w-full p-6 rounded-xl border border-slate-800 shadow-2xl space-y-4 font-sans text-xs">
             <h4 className="font-bold text-base text-white leading-snug">
               Rename Structural Budget
@@ -1609,7 +1611,7 @@ export default function App() {
 
       {/* Custom Budget Elimination Modal overlay */}
       {budgetToDelete && (
-        <div className="fixed inset-0 z-50 bg-[#040817]/75 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-[#10140f]/75 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-slate-900 max-w-sm w-full p-6 rounded-xl border border-slate-800 shadow-2xl space-y-4 font-sans text-xs">
             <h4 className="font-bold text-base text-white leading-snug">
               Confirm Budget Elimination
@@ -1646,7 +1648,7 @@ export default function App() {
 
       {/* Custom Balance adjustment / Reset Modal overlay */}
       {budgetToReset && (
-        <div className="fixed inset-0 z-50 bg-[#040817]/75 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-[#10140f]/75 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-slate-900 max-w-sm w-full p-6 rounded-xl border border-slate-800 shadow-2xl space-y-4 font-sans text-xs">
             <h4 className="font-bold text-base text-white leading-snug">
               Reset Budget Balance
