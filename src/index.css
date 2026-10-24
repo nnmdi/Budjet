@@ -190,7 +190,7 @@ body { margin: 0; }
 #application-container { background-image: radial-gradient(ellipse at 85% 0%, #29745133, transparent 55%); }
 #app-main { max-width: 1680px; margin-inline: auto; }
 #app-sidebar { background-color: #09271c; border-color: #28513d; }
-#brand-title, #view-title { font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-spacing: -.035em; }
+#brand-title, #view-title { font-family: var(--font-sans); font-weight: 700; letter-spacing: -.025em; }
 #brand-title { font-size: 23px; }
 #view-title { font-size: clamp(1.8rem, 3vw, 2.5rem); }
 #brand-subtitle { letter-spacing: .16em; font-size: 8px; }
@@ -235,3 +235,23 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px
 #btn-header-add-transaction:hover { background: #e2f2ea; box-shadow: 0 4px 16px #00000020; }
 #sidebar-nav button[aria-current="page"]:hover { background: #e2f2ea; }
 #application-container .bg-rose-700:hover, #auth-card .bg-rose-700:hover { background-color: #237a56; }
+
+/* Explicit select styling keeps Safari's native bevel from obscuring labels. */
+#application-container select {
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  background-color: var(--slate-950);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .875rem center;
+  padding-right: 2.75rem;
+  min-height: 44px;
+}
+#application-container select option {
+  background-color: var(--slate-950);
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
