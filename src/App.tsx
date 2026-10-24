@@ -32,6 +32,7 @@ import { formatCurrency, generateScheduleDates } from "./utils";
 import Sidebar from "./components/Sidebar";
 import ActiveBudgets from "./components/ActiveBudgets";
 import AnomalyAlerts from "./components/AnomalyAlerts";
+import OverspendingAlerts from "./components/OverspendingAlerts";
 import ProjectionInsights from "./components/ProjectionInsights";
 import RecentActivity from "./components/RecentActivity";
 import DueToday, { RecurringBill } from "./components/DueToday";
@@ -741,6 +742,12 @@ export default function App() {
           </div>
         </header>
 
+        <OverspendingAlerts
+          key={JSON.stringify([userEmail || "guest", roomId || "personal"])}
+          scope={JSON.stringify([userEmail || "guest", roomId || "personal"])}
+          ledger={workspace.ledger}
+          onReview={(name) => { setCurrentTab("budgets"); setActiveBudgetFilter(name); }}
+        />
         {/* --- ROUTED WORKSPACE VIEWS --- */}
         <div className="bento-workspace" key={`${currentTab}-${activeBudgetFilter ?? "all"}`}>
 

@@ -178,13 +178,13 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
         </div>
         <div className="space-y-0.5">
           <p className="font-bold text-white flex items-center gap-1.5 leading-tight">
-            <span>Spending alerts</span>
+            <span>Unusual purchase checks</span>
             <span className="font-mono bg-emerald-950/40 border border-emerald-900/30 text-emerald-400 px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider">
               LOCAL CHECK
             </span>
           </p>
           <p className="text-[11px] text-slate-400 leading-normal font-sans">
-            No alerts were found. Categories with limited history may not have
+            No unusual purchase spikes were found. Categories with limited history may not have
             enough data for a useful check.
           </p>
         </div>
@@ -238,7 +238,7 @@ export default function AnomalyAlerts({ transactions }: AnomalyAlertsProps) {
           <div className="space-y-1">
             <div className="flex items-center flex-wrap gap-2">
               <h4 className="text-sm font-black tracking-tight text-white animate-pulse">
-                Unexpected Spending Alerts
+                Unusual Purchase Alerts
               </h4>
               <div className="flex items-center gap-1 font-mono text-[9px] font-bold">
                 {criticalCount > 0 && (
