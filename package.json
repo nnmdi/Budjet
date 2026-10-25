@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run build && python -m backend.run",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build/server.cjs && esbuild scripts/backup.ts scripts/preflight.ts --bundle --platform=node --format=cjs --packages=external --outdir=build --out-extension:.js=.cjs && npm run build:core",
-    "start": "python -m backend.run",
+    "dev": "node --import tsx server.ts",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build/server.cjs && esbuild scripts/backup.ts scripts/preflight.ts --bundle --platform=node --format=cjs --packages=external --outdir=build --out-extension:.js=.cjs",
+    "start": "node build/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist build",
     "lint": "tsc --noEmit",
@@ -15,10 +15,7 @@
     "backup": "node build/backup.cjs",
     "check:production": "node build/preflight.cjs",
     "check:deployment": "node scripts/check-deployment.cjs",
-    "smoke:auth": "node scripts/smoke-auth.cjs",
-    "build:core": "esbuild server/fastapi-worker.ts --bundle --platform=node --format=cjs --packages=external --outfile=build/fastapi-worker.cjs",
-    "start:legacy": "node build/server.cjs",
-    "dev:legacy": "node --import tsx server.ts"
+    "smoke:auth": "node scripts/smoke-auth.cjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",

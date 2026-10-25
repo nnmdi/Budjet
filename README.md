@@ -40,7 +40,3 @@ Production requires an HTTPS origin and persistent DATA_DIR. See [ledger, migrat
 Site: `https://nnmdi.github.io/Budjet/`. Leave VITE_API_BASE_URL empty for local profiles, or configure a real HTTPS account API and its credentialed CORS/cookie settings as described in the deployment guide. No secrets belong in VITE variables.
 
 Forecasts are experimental, not validated predictions. JSON export is a complete ledger backup; CSV is a transaction interchange format. There is no Plaid or separate FastAPI implementation in this repository. The [original review](docs/CASH_DIET_REVIEW.md) documents the baseline issues; the update guide describes what has changed and what remains.
-
-## FastAPI backend
-
-FastAPI is now the default HTTP backend. It preserves the existing SQLite accounts and ledger through a private compatibility worker and adds account-backed Spending Guard preferences. See [migration and setup](docs/FASTAPI_MIGRATION.md) for Python/Node requirements, local startup, API contracts, rollout checks and the remaining TypeScript compatibility boundary. GitHub Pages remains browser-only until an API is deployed and configured.

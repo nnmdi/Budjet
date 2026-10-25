@@ -746,8 +746,6 @@ export default function App() {
           key={JSON.stringify([userEmail || "guest", roomId || "personal"])}
           scope={JSON.stringify([userEmail || "guest", roomId || "personal"])}
           ledger={workspace.ledger}
-          hosted={apiAvailable && Boolean(userEmail)}
-          roomId={roomId}
           onReview={(name) => { setCurrentTab("budgets"); setActiveBudgetFilter(name); }}
         />
         {/* --- ROUTED WORKSPACE VIEWS --- */}
