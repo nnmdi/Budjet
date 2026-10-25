@@ -29,7 +29,7 @@ export default function Toast({ toasts, onDismiss }: ToastProps) {
               <span className={`p-1.5 rounded-full ${toast.type === "success" ? "bg-emerald-500/20 text-emerald-400" : "bg-sky-500/20 text-sky-400"}`}>
                 <Check className="w-4 h-4" />
               </span>
-              <p className="text-sm font-sans tracking-tight font-medium text-slate-100">{toast.message}</p>
+              <p className="text-sm font-sans tracking-tight font-medium text-[#ffffff]">{toast.message}</p>
             </div>
             <button
               onClick={() => onDismiss(toast.id)}

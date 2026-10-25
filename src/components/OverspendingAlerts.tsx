@@ -88,7 +88,7 @@ export default function OverspendingAlerts({
             <h3 id="overspending-heading" className="font-bold text-white">
               Spending Guard
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-white">
               {configured} of {states.length} budgets have monthly spending
               limits
             </p>
@@ -109,7 +109,7 @@ export default function OverspendingAlerts({
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        className="text-sm text-slate-300"
+        className="text-sm text-white"
       >
         {alerts.length
           ? `${alerts.length} spending alert${alerts.length === 1 ? "" : "s"} need attention.`
@@ -124,7 +124,7 @@ export default function OverspendingAlerts({
             className={`rounded-2xl border p-4 ${a.severity === "critical" ? "bg-red-950/30 border-red-500/40" : "bg-amber-950/20 border-amber-500/30"}`}
           >
             <h4
-              className={`font-bold text-sm flex items-center gap-2 ${a.severity === "critical" ? "text-red-300" : "text-amber-200"}`}
+              className="font-bold text-sm text-white flex items-center gap-2"
             >
               <AlertTriangle className="w-4 h-4 shrink-0" />
               {a.severity === "critical" ? "Action needed" : "Heads up"} ·{" "}
@@ -139,7 +139,7 @@ export default function OverspendingAlerts({
                 Review {a.budget}
               </button>
               <button
-                className="text-slate-300 underline underline-offset-4"
+                className="text-white underline underline-offset-4"
                 onClick={() =>
                   save({
                     ...prefs,
