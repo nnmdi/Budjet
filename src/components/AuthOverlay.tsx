@@ -222,7 +222,7 @@ export default function AuthOverlay({
         <button
           type="button"
           onClick={onGuest}
-          className="w-full text-sm text-slate-400"
+          className="w-full text-sm text-white"
         >
           Try a guest workspace (not saved)
         </button>

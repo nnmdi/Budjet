@@ -632,16 +632,16 @@ export default function App() {
         </div>
         {/* Guest Warning Banner */}
         {!userEmail && isGuestMode && (
-          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-200 animate-fadeIn">
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white animate-fadeIn">
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-amber-500/15 rounded-xl text-amber-400 shrink-0">
                 <AlertCircle className="w-5 h-5 animate-pulse" />
               </div>
               <div>
-                <p className="font-extrabold text-[13px] text-amber-100 leading-tight">
+                <p className="font-extrabold text-[13px] text-white leading-tight">
                   Guest Workspace / Transient Session
                 </p>
-                <p className="text-[11px] text-amber-400/85 mt-1 leading-relaxed">
+                <p className="text-[11px] text-white mt-1 leading-relaxed">
                   Your transactions and budgets are NOT being saved. Create an
                   account or log in to persist your personal ledger across
                   sessions.
