@@ -23,11 +23,11 @@ The settings panel shows remaining monthly allowance and its average per remaini
 
 ## Persistence and notification scope
 
-Limits and acknowledgements are browser-local, isolated by profile and room. They are not shared with collaborators, synced to other devices, or part of ledger backup exports. Storage failures are shown instead of claiming a save succeeded. Alerts run while the app is open, updating with ledger changes and a once-per-minute clock for month rollover. This version has no email, SMS or background push notifications. It does not block purchases or bank transactions.
+For browser-only profiles, limits and acknowledgements are browser-local, isolated by profile and room. For server accounts, FastAPI stores them per user and workspace with revision checks and computes alerts from the saved ledger. They sync across devices when the app refreshes. Shared-room members retain individual preferences. Ledger JSON backup exports do not include preferences, while full database backups do. Storage failures are shown instead of claiming a save succeeded. Alerts run while the app is open, updating with ledger changes and a once-per-minute clock for month rollover. This version has no email, SMS or background push notifications. It does not block purchases or bank transactions.
 
 ## Possible later improvements
 
-- Server-backed preferences and alert history, with explicit rules for personal versus shared-room settings.
+- A historical alert timeline. Account-backed preferences are now implemented; each room member retains personal limits.
 - Optional email/push delivery, quiet hours and delivery deduplication; requires a running backend and permission to notify.
 - Configurable weekly or payday cycles, rollover and per-budget warning thresholds.
 - Upcoming-bill shortfall estimates using scheduled transactions, avoiding double counting of recurring bills.

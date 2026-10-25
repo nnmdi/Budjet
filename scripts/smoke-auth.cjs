@@ -7,7 +7,7 @@ const fs = require("node:fs"),
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "cash-auth-smoke-"));
   const port = 3102,
     origin = `http://localhost:${port}`;
-  const server = spawn(process.execPath, ["build/server.cjs"], {
+  const server = spawn(process.env.PYTHON || "python3", ["-m", "backend.run"], {
     env: {
       ...process.env,
       NODE_ENV: "development",
